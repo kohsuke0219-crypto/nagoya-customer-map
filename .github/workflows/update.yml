@@ -1,5 +1,6 @@
 name: Update Customer Map
 
+# 来店客データ(customers.json)を日次で再生成してコミットするワークフロー
 on:
   # 毎日 朝6:00 JST (= 前日 21:00 UTC) に自動実行
   schedule:
