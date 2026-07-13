@@ -117,18 +117,24 @@ def build(
         key = r["newspaper"] or "未回答"
         by_newspaper[key] = by_newspaper.get(key, 0) + 1
 
-    payload = {
-        "generated_at": datetime.now(JST).isoformat(timespec="seconds"),
-        "store": {
-            "name": "買取大吉 守山店",
-            "lat": 35.2017705,
-            "lng": 136.9961965,
-        },
+    store = {"name": "買取大吉 守山店", "lat": 35.2017705, "lng": 136.9961965}
+    # generated_at 以外の「実データ」部分。これが前回と同じなら書き換えない
+    # （10分ごとの自動実行で無意味なコミットを量産しないため）。
+    data_body = {
+        "store": store,
         "total": len(out_records),
         "by_newspaper": by_newspaper,
         "customers": out_records,
     }
 
+    if _same_as_existing(output_path, data_body):
+        logger.info("データに変化なし。customers.json は更新しません（%d 件）", len(out_records))
+        return {
+            "total": len(out_records), "skipped": skipped,
+            "by_newspaper": by_newspaper, "changed": False,
+        }
+
+    payload = {"generated_at": datetime.now(JST).isoformat(timespec="seconds"), **data_body}
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
@@ -137,7 +143,24 @@ def build(
         "customers.json を書き出し: %d 件（スキップ %d 件）-> %s",
         len(out_records), skipped, output_path,
     )
-    return {"total": len(out_records), "skipped": skipped, "by_newspaper": by_newspaper}
+    return {
+        "total": len(out_records), "skipped": skipped,
+        "by_newspaper": by_newspaper, "changed": True,
+    }
+
+
+def _same_as_existing(output_path: str, data_body: dict[str, Any]) -> bool:
+    """既存の customers.json が data_body（generated_at 除く）と同一かどうか。"""
+    if not os.path.exists(output_path):
+        return False
+    try:
+        with open(output_path, encoding="utf-8") as f:
+            old = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return False
+    old_body = {k: old.get(k) for k in ("store", "total", "by_newspaper", "customers")}
+    # dict の等価比較で内容一致を判定（キー順は影響しない）
+    return old_body == data_body
 
 
 if __name__ == "__main__":

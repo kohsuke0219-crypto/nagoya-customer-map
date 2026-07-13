@@ -54,6 +54,18 @@
   #legendPanel .row { display: flex; align-items: center; gap: 7px; padding: 2px 0; }
   .note { font-size: 11px; color: #777; margin-top: 6px; }
 
+  /* 更新ボタン（左上） */
+  #updatePanel { text-align: center; min-width: 130px; }
+  #updateBtn {
+    font-size: 15px; font-weight: bold; padding: 9px 14px; width: 100%;
+    background: var(--store-pink); color: #fff; border: none; border-radius: 8px;
+    cursor: pointer; line-height: 1.2;
+  }
+  #updateBtn:active { transform: translateY(1px); }
+  #updateBtn:disabled { opacity: 0.6; cursor: default; }
+  #updateStatus { font-size: 11px; color: #555; margin-top: 6px; white-space: nowrap; }
+  #updateStatus.flash { color: #0a8a3a; font-weight: bold; }
+
   .store-pin {
     width: 20px; height: 20px; background: var(--store-pink);
     border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
@@ -111,10 +123,15 @@ L.marker([STORE.lat, STORE.lng], { icon: storeIcon, zIndexOffset: 1000 })
   .bindPopup(`<b>${STORE.name}</b><br>（店舗）`);
 
 // ===== 動的カテゴリ＋レイヤー =====
-const layers = {};       // newspaper -> L.layerGroup
-const colorOf = {};      // newspaper -> color
-const countOf = {};      // newspaper -> 件数
+let layers = {};         // newspaper -> L.layerGroup
+let colorOf = {};        // newspaper -> color
+let countOf = {};        // newspaper -> 件数
 let grandTotal = 0;
+
+// 再描画のために保持するコントロール/要素の参照
+let filterCtl = null, summaryCtl = null, legendCtl = null;
+let emptyMsgEl = null;
+let lastSignature = null;  // データ変化の検知用
 
 function assignColors(newspapers) {
   // 安定した色割り当てのため名前でソート
@@ -166,7 +183,8 @@ function buildControls() {
       return div;
     },
   });
-  map.addControl(new FilterCtl());
+  filterCtl = new FilterCtl();
+  map.addControl(filterCtl);
 
   // --- 集計（左下） ---
   const SummaryCtl = L.Control.extend({
@@ -187,7 +205,8 @@ function buildControls() {
       return div;
     },
   });
-  map.addControl(new SummaryCtl());
+  summaryCtl = new SummaryCtl();
+  map.addControl(summaryCtl);
 
   // --- 凡例（右下） ---
   const LegendCtl = L.Control.extend({
@@ -205,51 +224,142 @@ function buildControls() {
       return div;
     },
   });
-  map.addControl(new LegendCtl());
+  legendCtl = new LegendCtl();
+  map.addControl(legendCtl);
+}
+
+// ===== 更新ボタン（左上・常設） =====
+let updateStatusEl = null;
+let updateBtnEl = null;
+
+const UpdateCtl = L.Control.extend({
+  options: { position: "topleft" },
+  onAdd: function () {
+    const div = L.DomUtil.create("div", "panel");
+    div.id = "updatePanel";
+    div.innerHTML =
+      '<button id="updateBtn" type="button">🔄 更新</button>' +
+      '<div id="updateStatus">読み込み中…</div>';
+    L.DomEvent.disableClickPropagation(div);
+    updateBtnEl = div.querySelector("#updateBtn");
+    updateStatusEl = div.querySelector("#updateStatus");
+    updateBtnEl.addEventListener("click", () => loadData({ force: true }));
+    return div;
+  },
+});
+map.addControl(new UpdateCtl());
+
+// ===== 描画のクリア＆再構築 =====
+function clearRender() {
+  Object.values(layers).forEach((lg) => map.removeLayer(lg));
+  layers = {};
+  colorOf = {};
+  countOf = {};
+  grandTotal = 0;
+  if (filterCtl) { map.removeControl(filterCtl); filterCtl = null; }
+  if (summaryCtl) { map.removeControl(summaryCtl); summaryCtl = null; }
+  if (legendCtl) { map.removeControl(legendCtl); legendCtl = null; }
+  if (emptyMsgEl) { emptyMsgEl.remove(); emptyMsgEl = null; }
+}
+
+function render(data) {
+  clearRender();
+  const customers = data.customers || [];
+  grandTotal = customers.length;
+
+  if (grandTotal === 0) {
+    emptyMsgEl = L.DomUtil.create("div", "empty-msg", document.body);
+    emptyMsgEl.innerHTML =
+      "まだ来店客データがありません。<br>フォームから登録されると、ここに表示されます。";
+    return;
+  }
+
+  const newspapers = [...new Set(customers.map((c) => c.newspaper || "未回答"))];
+  assignColors(newspapers);
+  newspapers.forEach((np) => {
+    layers[np] = L.layerGroup().addTo(map);
+    countOf[np] = 0;
+  });
+
+  customers.forEach((c) => {
+    const np = c.newspaper || "未回答";
+    countOf[np] = (countOf[np] || 0) + 1;
+    L.circleMarker([c.lat, c.lng], {
+      radius: 7,
+      color: "#fff",
+      weight: 1.5,
+      fillColor: colorOf[np] || FALLBACK_COLOR,
+      fillOpacity: 0.85,
+    })
+      .bindPopup(popupHtml(c))
+      .addTo(layers[np]);
+  });
+
+  buildControls();
+}
+
+// データの世代を表す文字列（generated_at + 件数）で変化を検知
+function signatureOf(data) {
+  return (data.generated_at || "") + "#" + ((data.customers || []).length);
+}
+
+// generated_at を "07/13 14:02" 形式に整形
+function fmtGenerated(iso) {
+  if (!iso) return "不明";
+  const m = String(iso).match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  return m ? `${m[2]}/${m[3]} ${m[4]}:${m[5]}` : iso;
+}
+
+function setStatus(text, flash) {
+  if (!updateStatusEl) return;
+  updateStatusEl.textContent = text;
+  updateStatusEl.classList.toggle("flash", !!flash);
 }
 
 // ===== データ読み込み =====
-fetch("data/customers.json?_=" + Date.now())
-  .then((r) => r.json())
-  .then((data) => {
-    const customers = data.customers || [];
-    grandTotal = customers.length;
+// opts.force: ボタン押下（必ず再描画＋フィードバック）
+// opts.silent: 自動更新（変化がなければ再描画しない＝操作を邪魔しない）
+function loadData(opts = {}) {
+  if (updateBtnEl) updateBtnEl.disabled = true;
+  if (opts.force) setStatus("更新中…", false);
 
-    if (grandTotal === 0) {
-      const msg = L.DomUtil.create("div", "empty-msg", document.body);
-      msg.innerHTML = "まだ来店客データがありません。<br>フォームから登録されると、ここに表示されます。";
-      return;
-    }
+  return fetch("data/customers.json?_=" + Date.now())
+    .then((r) => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then((data) => {
+      const sig = signatureOf(data);
+      const changed = sig !== lastSignature;
+      const dataTime = fmtGenerated(data.generated_at);
 
-    // 新聞社カテゴリを抽出
-    const newspapers = [...new Set(customers.map((c) => c.newspaper || "未回答"))];
-    assignColors(newspapers);
-    newspapers.forEach((np) => {
-      layers[np] = L.layerGroup().addTo(map);
-      countOf[np] = 0;
+      if (changed || opts.force) {
+        render(data);
+        lastSignature = sig;
+      }
+
+      if (opts.force) {
+        setStatus(changed ? "更新しました" : "最新です（データ更新 " + dataTime + "）", true);
+        setTimeout(() => setStatus("データ更新 " + dataTime, false), 2500);
+      } else {
+        setStatus("データ更新 " + dataTime, false);
+      }
+    })
+    .catch((err) => {
+      setStatus("更新に失敗しました", false);
+      if (!lastSignature && !emptyMsgEl) {
+        emptyMsgEl = L.DomUtil.create("div", "empty-msg", document.body);
+        emptyMsgEl.textContent = "データの読み込みに失敗しました: " + err;
+      }
+    })
+    .finally(() => {
+      if (updateBtnEl) updateBtnEl.disabled = false;
     });
+}
 
-    // 来店客ピン（新聞社別の色付き円）
-    customers.forEach((c) => {
-      const np = c.newspaper || "未回答";
-      countOf[np] = (countOf[np] || 0) + 1;
-      L.circleMarker([c.lat, c.lng], {
-        radius: 7,
-        color: "#fff",
-        weight: 1.5,
-        fillColor: colorOf[np] || FALLBACK_COLOR,
-        fillOpacity: 0.85,
-      })
-        .bindPopup(popupHtml(c))
-        .addTo(layers[np]);
-    });
-
-    buildControls();
-  })
-  .catch((err) => {
-    const msg = L.DomUtil.create("div", "empty-msg", document.body);
-    msg.textContent = "データの読み込みに失敗しました: " + err;
-  });
+// 初回読み込み＋3分ごとの自動チェック（変化があった時だけ再描画）
+loadData();
+setInterval(() => loadData({ silent: true }), 180000);
 </script>
 </body>
 </html>

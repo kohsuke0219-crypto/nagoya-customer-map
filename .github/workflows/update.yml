@@ -2,9 +2,11 @@ name: Update Customer Map
 
 # 来店客データ(customers.json)を日次で再生成してコミットするワークフロー
 on:
-  # 毎日 朝6:00 JST (= 前日 21:00 UTC) に自動実行
+  # 10分ごとに自動実行（来店客をなるべく早く地図へ反映）。
+  # ※データに変化がある時だけ customers.json をコミットする（build 側で判定）。
+  # ※Public リポジトリは GitHub Actions 実行時間が無料。
   schedule:
-    - cron: "0 21 * * *"
+    - cron: "*/10 * * * *"
   # 手動実行も可能
   workflow_dispatch:
 
