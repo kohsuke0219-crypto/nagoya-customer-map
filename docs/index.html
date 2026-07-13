@@ -13,7 +13,11 @@
 />
 <style>
   :root {
-    --store-pink: #ff2e93;
+    /* 買取大吉ブランドカラー（公式ロゴ・サイト実測）。紺=メイン / 金=アクセント / 赤=補助 */
+    --brand: #153C96;        /* 濃紺（メイン） */
+    --brand-dark: #100169;   /* ロゴの深紺 */
+    --brand-gold: #F2C230;   /* 金（大吉らしさ・強調枠） */
+    --brand-red: #CE0000;    /* 赤（補助アクセント） */
     --panel-bg: rgba(255, 255, 255, 0.95);
     --panel-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
   }
@@ -23,8 +27,9 @@
   /* 見出しバー */
   #titlebar {
     position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
-    background: var(--store-pink); color: #fff;
+    background: var(--brand-dark); color: #fff;
     padding: 10px 14px; font-size: 18px; font-weight: bold;
+    border-bottom: 3px solid var(--brand-gold);
     box-shadow: var(--panel-shadow); text-align: center;
     letter-spacing: 0.02em;
   }
@@ -45,7 +50,7 @@
 
   /* 集計（左下） */
   #summaryPanel { min-width: 150px; }
-  #summaryPanel .total { font-size: 22px; font-weight: bold; color: var(--store-pink); }
+  #summaryPanel .total { font-size: 22px; font-weight: bold; color: var(--brand); }
   #summaryPanel table { width: 100%; border-collapse: collapse; margin-top: 4px; }
   #summaryPanel td { padding: 1px 2px; }
   #summaryPanel td.cnt { text-align: right; font-variant-numeric: tabular-nums; font-weight: bold; }
@@ -58,7 +63,7 @@
   #updatePanel { text-align: center; min-width: 130px; }
   #updateBtn {
     font-size: 15px; font-weight: bold; padding: 9px 14px; width: 100%;
-    background: var(--store-pink); color: #fff; border: none; border-radius: 8px;
+    background: var(--brand); color: #fff; border: none; border-radius: 8px;
     cursor: pointer; line-height: 1.2;
   }
   #updateBtn:active { transform: translateY(1px); }
@@ -67,11 +72,31 @@
   #updateStatus.flash { color: #0a8a3a; font-weight: bold; }
 
   .store-pin {
-    width: 20px; height: 20px; background: var(--store-pink);
-    border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+    width: 20px; height: 20px; background: var(--brand);
+    border: 3px solid var(--brand-gold); box-shadow: 0 0 0 1.5px rgba(0,0,0,0.45);
   }
   .leaflet-popup-content { font-size: 13px; line-height: 1.6; }
-  .leaflet-popup-content b { color: var(--store-pink); }
+  .leaflet-popup-content b { color: var(--brand); }
+  /* 削除ボタン（ポップアップ内） */
+  .del-btn {
+    margin-top: 8px; display: inline-block; font-size: 12px; font-weight: bold;
+    color: #fff; background: var(--brand-red); border: none; border-radius: 6px;
+    padding: 5px 10px; cursor: pointer;
+  }
+  .del-btn:disabled { opacity: 0.5; cursor: default; }
+  /* トースト通知 */
+  #toast {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 2000; background: rgba(20,20,20,0.9); color: #fff; padding: 9px 16px;
+    border-radius: 20px; font-size: 13px; box-shadow: var(--panel-shadow);
+    opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+  /* 設定ボタン（更新パネル内の小さな歯車） */
+  #gearBtn {
+    margin-top: 6px; font-size: 11px; color: var(--brand); background: none;
+    border: none; cursor: pointer; text-decoration: underline; padding: 0;
+  }
   .empty-msg {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
     z-index: 1000; background: var(--panel-bg); padding: 16px 22px; border-radius: 8px;
@@ -111,7 +136,7 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 }).addTo(map);
 
-// 店舗マーカー（ピンク色の四角ピン）
+// 店舗マーカー（ブランド紺の四角ピン・金縁）
 const storeIcon = L.divIcon({
   className: "",
   html: '<div class="store-pin"></div>',
@@ -132,6 +157,60 @@ let grandTotal = 0;
 let filterCtl = null, summaryCtl = null, legendCtl = null;
 let emptyMsgEl = null;
 let lastSignature = null;  // データ変化の検知用
+let lastData = null;       // 直近に読み込んだデータ（削除後の再描画用）
+
+// ===== 削除機能の設定・状態 =====
+// 削除用バックエンド(Google Apps Script Webアプリ)のURL/トークンは端末ごとに
+// localStorage に保存する（公開ソースには出さない）。
+const DEL_URL_KEY = "nagoya_del_api_url";
+const DEL_TOKEN_KEY = "nagoya_del_token";
+// 削除済みIDのローカル記録。CIの再ビルド(最大10分)を待たずに、地図から
+// 消えたままにするためのフィルタ。次のビルドでJSONから消えたら自動で掃除。
+const DEL_LOCAL_KEY = "nagoya_deleted_ids";
+
+function getDelConfig() {
+  return {
+    url: (localStorage.getItem(DEL_URL_KEY) || "").trim(),
+    token: (localStorage.getItem(DEL_TOKEN_KEY) || "").trim(),
+  };
+}
+function loadLocalDeleted() {
+  try { return new Set(JSON.parse(localStorage.getItem(DEL_LOCAL_KEY) || "[]")); }
+  catch (e) { return new Set(); }
+}
+function saveLocalDeleted(set) {
+  localStorage.setItem(DEL_LOCAL_KEY, JSON.stringify([...set]));
+}
+let localDeleted = loadLocalDeleted();
+
+// トースト通知
+let toastTimer = null;
+function toast(msg) {
+  let el = document.getElementById("toast");
+  if (!el) { el = L.DomUtil.create("div", "", document.body); el.id = "toast"; }
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+// 削除用バックエンドの設定（URL＋合言葉）。未設定なら入力を促す。
+function ensureDelConfig() {
+  let cfg = getDelConfig();
+  if (cfg.url && cfg.token) return cfg;
+  const url = prompt(
+    "【初回設定】削除機能を使うには、管理者から共有された\n" +
+    "Apps Script WebアプリのURLを貼り付けてください。",
+    cfg.url || ""
+  );
+  if (url === null) return null;
+  const token = prompt("同じく、合言葉（トークン）を入力してください。", cfg.token || "");
+  if (token === null) return null;
+  localStorage.setItem(DEL_URL_KEY, url.trim());
+  localStorage.setItem(DEL_TOKEN_KEY, token.trim());
+  cfg = getDelConfig();
+  return cfg.url && cfg.token ? cfg : null;
+}
 
 function assignColors(newspapers) {
   // 安定した色割り当てのため名前でソート
@@ -148,12 +227,93 @@ function esc(s) {
 }
 
 function popupHtml(c) {
+  const delBtn = c.id
+    ? `<br><button class="del-btn" data-del="${esc(c.id)}">🗑 このデータを削除</button>`
+    : "";
   return (
     `<b>${esc(c.newspaper || "未回答")}</b><br>` +
     `${esc(c.area || "地域不明")}<br>` +
     `性別: ${esc(c.gender || "-")}／年代: ${esc(c.age_group || "-")}<br>` +
-    `登録: ${esc(c.registered_at || "-")}`
+    `登録: ${esc(c.registered_at || "-")}` +
+    delBtn
   );
+}
+
+// ポップアップが開いたら削除ボタンにハンドラを付ける
+map.on("popupopen", (e) => {
+  const marker = e.popup._source;
+  if (!marker || !marker._cust) return;
+  const btn = e.popup._contentNode &&
+    e.popup._contentNode.querySelector(".del-btn");
+  if (btn) btn.addEventListener("click", () => deleteCustomer(marker, btn));
+});
+
+// 来店客データを削除する（バックエンドで該当行を削除＋ローカルにも即反映）
+function deleteCustomer(marker, btn) {
+  const c = marker._cust;
+  if (!c || !c.id) return;
+  if (!confirm(
+    "このデータを削除しますか？\n" +
+    `（${c.area || ""} / ${c.newspaper || ""} / ${c.registered_at || ""}）\n` +
+    "※スプレッドシートの元データも削除されます。"
+  )) return;
+
+  const cfg = ensureDelConfig();
+  if (!cfg) { toast("削除設定が未完了です"); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = "削除中…"; }
+  // text/plain で送る（プリフライトを避ける = CORS 回避。daikichi と同じ方式）
+  fetch(cfg.url, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ kind: "delete", token: cfg.token, id: c.id }),
+  })
+    .then((r) => r.json())
+    .then((res) => {
+      if (res && (res.ok || res.deleted > 0)) {
+        // ローカルにも記録して、再読込しても消えたままにする
+        localDeleted.add(c.id);
+        saveLocalDeleted(localDeleted);
+        map.closePopup();
+        removeCustomerMarker(marker, c);
+        toast("削除しました");
+      } else {
+        const msg = (res && res.error) ? res.error : "見つかりませんでした";
+        toast("削除できませんでした: " + msg);
+        if (btn) { btn.disabled = false; btn.textContent = "🗑 このデータを削除"; }
+      }
+    })
+    .catch((err) => {
+      toast("通信に失敗しました");
+      if (btn) { btn.disabled = false; btn.textContent = "🗑 このデータを削除"; }
+    });
+}
+
+// 1件分のピンを地図と集計から取り除く（トグル状態は維持）
+function removeCustomerMarker(marker, c) {
+  const np = c.newspaper || "未回答";
+  if (layers[np]) layers[np].removeLayer(marker);
+  if (countOf[np] != null) countOf[np] = Math.max(0, countOf[np] - 1);
+  grandTotal = Math.max(0, grandTotal - 1);
+  refreshSummary();
+}
+
+function summaryHtml() {
+  let rows = "";
+  Object.keys(colorOf).forEach((np) => {
+    rows +=
+      `<tr><td><span class="swatch" style="background:${colorOf[np]}"></span> ${esc(np)}</td>` +
+      `<td class="cnt">${countOf[np] || 0}</td></tr>`;
+  });
+  return `<h3>集計</h3><div>合計 <span class="total">${grandTotal}</span> 件</div>` +
+    `<table>${rows}</table>`;
+}
+
+// 集計パネルだけを再描画（削除時にトグル状態を崩さず件数を更新）
+function refreshSummary() {
+  if (summaryCtl && summaryCtl.getContainer()) {
+    summaryCtl.getContainer().innerHTML = summaryHtml();
+  }
 }
 
 function buildControls() {
@@ -192,15 +352,7 @@ function buildControls() {
     onAdd: function () {
       const div = L.DomUtil.create("div", "panel");
       div.id = "summaryPanel";
-      let rows = "";
-      Object.keys(colorOf).forEach((np) => {
-        rows +=
-          `<tr><td><span class="swatch" style="background:${colorOf[np]}"></span> ${esc(np)}</td>` +
-          `<td class="cnt">${countOf[np]}</td></tr>`;
-      });
-      div.innerHTML =
-        `<h3>集計</h3><div>合計 <span class="total">${grandTotal}</span> 件</div>` +
-        `<table>${rows}</table>`;
+      div.innerHTML = summaryHtml();
       L.DomEvent.disableClickPropagation(div);
       return div;
     },
@@ -239,11 +391,16 @@ const UpdateCtl = L.Control.extend({
     div.id = "updatePanel";
     div.innerHTML =
       '<button id="updateBtn" type="button">🔄 更新</button>' +
-      '<div id="updateStatus">読み込み中…</div>';
+      '<div id="updateStatus">読み込み中…</div>' +
+      '<button id="gearBtn" type="button">⚙ 削除の設定</button>';
     L.DomEvent.disableClickPropagation(div);
     updateBtnEl = div.querySelector("#updateBtn");
     updateStatusEl = div.querySelector("#updateStatus");
     updateBtnEl.addEventListener("click", () => loadData({ force: true }));
+    div.querySelector("#gearBtn").addEventListener("click", () => {
+      const cfg = ensureDelConfig();
+      if (cfg) toast("削除の設定を保存しました");
+    });
     return div;
   },
 });
@@ -264,7 +421,13 @@ function clearRender() {
 
 function render(data) {
   clearRender();
-  const customers = data.customers || [];
+  lastData = data;
+  const all = data.customers || [];
+
+  // JSON に存在しなくなった削除IDはローカル記録から掃除（CIが反映済み）
+  pruneLocalDeleted(all);
+  // ローカルで削除済みのものは表示しない（再ビルド待ちの間も消えたまま）
+  const customers = all.filter((c) => !(c.id && localDeleted.has(c.id)));
   grandTotal = customers.length;
 
   if (grandTotal === 0) {
@@ -284,18 +447,29 @@ function render(data) {
   customers.forEach((c) => {
     const np = c.newspaper || "未回答";
     countOf[np] = (countOf[np] || 0) + 1;
-    L.circleMarker([c.lat, c.lng], {
+    const marker = L.circleMarker([c.lat, c.lng], {
       radius: 7,
       color: "#fff",
       weight: 1.5,
       fillColor: colorOf[np] || FALLBACK_COLOR,
       fillOpacity: 0.85,
-    })
-      .bindPopup(popupHtml(c))
-      .addTo(layers[np]);
+    }).bindPopup(popupHtml(c));
+    marker._cust = c;            // 削除時に参照する
+    marker.addTo(layers[np]);
   });
 
   buildControls();
+}
+
+// 現在のJSONに無い削除IDはもう不要（サーバ側で消えた）→ ローカル記録から除去
+function pruneLocalDeleted(allCustomers) {
+  if (!localDeleted.size) return;
+  const present = new Set(allCustomers.map((c) => c.id).filter(Boolean));
+  let changed = false;
+  for (const id of [...localDeleted]) {
+    if (!present.has(id)) { localDeleted.delete(id); changed = true; }
+  }
+  if (changed) saveLocalDeleted(localDeleted);
 }
 
 // データの世代を表す文字列（generated_at + 件数）で変化を検知

@@ -47,14 +47,28 @@ METERS_PER_DEG_LAT = 111_000.0
 JST = timezone(timedelta(hours=9))
 
 
+# 照合に使うフィールド（この順・この区切りで Apps Script 側と厳密に一致させる）
+_ID_FIELDS = ("postal_code", "chome", "gender", "age_group", "newspaper", "registered_at")
+
+
+def _record_key(rec: dict[str, Any]) -> str:
+    return "|".join(str(rec.get(k, "")) for k in _ID_FIELDS)
+
+
 def _stable_seed(rec: dict[str, Any]) -> int:
     """顧客レコードから安定したシード値を作る（同じ人は常に同じオフセット）。"""
-    key = "|".join(
-        str(rec.get(k, ""))
-        for k in ("postal_code", "chome", "gender", "age_group", "newspaper", "registered_at")
-    )
-    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(_record_key(rec).encode("utf-8")).hexdigest()
     return int(digest[:16], 16)
+
+
+def _record_id(rec: dict[str, Any]) -> str:
+    """マップ上での削除に使う不可逆な識別子。
+
+    郵便番号・丁目などの生値そのものは公開しないが、この 12桁ハッシュを
+    Apps Script 側で各行から同じ手順で再計算し、一致した行を削除する。
+    ★Apps Script(delete_customer.gs)の recordId_() と同一アルゴリズムを保つこと。
+    """
+    return hashlib.sha256(_record_key(rec).encode("utf-8")).hexdigest()[:12]
 
 
 def apply_privacy_offset(lat: float, lng: float, seed: int) -> tuple[float, float]:
@@ -100,6 +114,7 @@ def build(
         # ★出力には市区町村レベルの表示テキストと丸め座標のみ。詳細住所は入れない。
         out_records.append(
             {
+                "id": _record_id(rec),  # 削除照合用の不可逆ID（生の住所は含まない）
                 "lat": lat,
                 "lng": lng,
                 "area": f"{res.prefecture}{res.city}",  # 例: 愛知県名古屋市守山区

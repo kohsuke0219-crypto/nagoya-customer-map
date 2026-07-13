@@ -46,8 +46,32 @@ pip install -r requirements.txt
 | `customer/zip_to_coord.py` | 郵便番号＋丁目 → 座標変換 |
 | `customer/fetch_customers.py` | スプレッドシートから来店客データ取得 |
 | `customer/build_customer_data.py` | 座標変換＋プライバシー処理 → JSON 生成 |
-| `docs/index.html` | Leaflet 地図（新聞社別色分け） |
+| `docs/index.html` | Leaflet 地図（新聞社別色分け・更新/削除ボタン） |
 | `docs/data/customers.json` | 表示用データ（公開・匿名化済み） |
+| `apps_script/delete_customer.gs` | 地図からの削除を受けるバックエンド（Apps Script） |
+
+配色は買取大吉のブランドカラー（紺 `#153C96` ／ 深紺 `#100169` ／ 金 `#F2C230`）に統一しています。
+
+## 来店客データの削除（地図から）
+
+入力を間違えた場合、地図上のピンをクリック →「🗑 このデータを削除」で消せます。
+静的サイトから直接スプレッドシートは編集できないため、**Google Apps Script のWebアプリ**を
+バックエンドにして該当行を削除します（daikichi-mapper のお気に入り共有と同じ方式）。
+
+**初回セットアップ（1回だけ・管理者）**
+
+1. スプレッドシート「買取大吉 来店客記録（名古屋）_回答」を開く
+2. 「拡張機能 > Apps Script」を開き、`apps_script/delete_customer.gs` の全文を貼り付け
+3. コード内の `TOKEN` に合言葉を設定（例: `moriyama2026`）して保存
+4. 「デプロイ > 新しいデプロイ > ウェブアプリ」
+   （実行ユーザー=自分／アクセス=全員）→ 表示された `.../exec` URL を控える
+5. 地図の「⚙ 削除の設定」を押し、その URL と 合言葉 を入力（端末ごとに1回）
+6. 動作確認: ブラウザで `<exec URL>?debug=1` を開き、表示される `ids` に
+   `customers.json` の各 `id` が含まれていれば照合OK
+
+削除は二重に反映されます: バックエンドが元の行を削除し、同時に端末側にも記録するので、
+CI の再ビルド（最大10分）を待たずに地図から消えたままになります。
+※削除した回答は Google フォームの「回答」タブには残るため、完全には失われません。
 
 ## 関連プロジェクト
 
