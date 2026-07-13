@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>買取大吉 守山店 来店客マップ</title>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin=""
+/>
+<style>
+  :root {
+    --store-pink: #ff2e93;
+    --panel-bg: rgba(255, 255, 255, 0.95);
+    --panel-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  }
+  html, body { margin: 0; height: 100%; font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
+  #map { position: absolute; inset: 0; }
+
+  /* 見出しバー */
+  #titlebar {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
+    background: var(--store-pink); color: #fff;
+    padding: 10px 14px; font-size: 18px; font-weight: bold;
+    box-shadow: var(--panel-shadow); text-align: center;
+    letter-spacing: 0.02em;
+  }
+  #titlebar small { display: block; font-size: 12px; font-weight: normal; opacity: 0.9; margin-top: 2px; }
+
+  /* 共通パネル */
+  .panel {
+    background: var(--panel-bg); border-radius: 8px; box-shadow: var(--panel-shadow);
+    padding: 10px 12px; font-size: 13px; line-height: 1.5; color: #222;
+  }
+  .panel h3 { margin: 0 0 6px; font-size: 13px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+
+  /* 新聞社トグル（右上） */
+  #filterPanel { max-height: 45vh; overflow-y: auto; max-width: 190px; }
+  #filterPanel label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 3px 0; }
+  #filterPanel input { width: 18px; height: 18px; }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.25); flex: none; }
+
+  /* 集計（左下） */
+  #summaryPanel { min-width: 150px; }
+  #summaryPanel .total { font-size: 22px; font-weight: bold; color: var(--store-pink); }
+  #summaryPanel table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  #summaryPanel td { padding: 1px 2px; }
+  #summaryPanel td.cnt { text-align: right; font-variant-numeric: tabular-nums; font-weight: bold; }
+
+  /* 凡例（右下） */
+  #legendPanel .row { display: flex; align-items: center; gap: 7px; padding: 2px 0; }
+  .note { font-size: 11px; color: #777; margin-top: 6px; }
+
+  .store-pin {
+    width: 20px; height: 20px; background: var(--store-pink);
+    border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+  }
+  .leaflet-popup-content { font-size: 13px; line-height: 1.6; }
+  .leaflet-popup-content b { color: var(--store-pink); }
+  .empty-msg {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 1000; background: var(--panel-bg); padding: 16px 22px; border-radius: 8px;
+    box-shadow: var(--panel-shadow); font-size: 15px; color: #444; text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="titlebar">
+  買取大吉 守山店 来店客マップ
+  <small>新聞折込チラシ効果分析（位置は個人情報保護のため約100m丸め）</small>
+</div>
+<div id="map"></div>
+
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""
+></script>
+<script>
+// ===== 設定 =====
+const STORE = { name: "買取大吉 守山店", lat: 35.2017705, lng: 136.9961965 };
+const INIT_CENTER = [STORE.lat, STORE.lng];
+const INIT_ZOOM = 14;
+
+// 新聞社カテゴリに自動割り当てる10色パレット（見分けやすい色）
+const PALETTE = [
+  "#E63946", "#457B9D", "#2A9D8F", "#F4A261", "#9B5DE5",
+  "#00BBF9", "#F15BB5", "#8AC926", "#BC6C25", "#5C677D",
+];
+const FALLBACK_COLOR = "#999999";
+
+// ===== 地図初期化 =====
+const map = L.map("map", { zoomControl: true }).setView(INIT_CENTER, INIT_ZOOM);
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  maxZoom: 19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+}).addTo(map);
+
+// 店舗マーカー（ピンク色の四角ピン）
+const storeIcon = L.divIcon({
+  className: "",
+  html: '<div class="store-pin"></div>',
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+});
+L.marker([STORE.lat, STORE.lng], { icon: storeIcon, zIndexOffset: 1000 })
+  .addTo(map)
+  .bindPopup(`<b>${STORE.name}</b><br>（店舗）`);
+
+// ===== 動的カテゴリ＋レイヤー =====
+const layers = {};       // newspaper -> L.layerGroup
+const colorOf = {};      // newspaper -> color
+const countOf = {};      // newspaper -> 件数
+let grandTotal = 0;
+
+function assignColors(newspapers) {
+  // 安定した色割り当てのため名前でソート
+  newspapers.sort((a, b) => a.localeCompare(b, "ja"));
+  newspapers.forEach((np, i) => {
+    colorOf[np] = PALETTE[i] || FALLBACK_COLOR;
+  });
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"]/g, (c) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+  );
+}
+
+function popupHtml(c) {
+  return (
+    `<b>${esc(c.newspaper || "未回答")}</b><br>` +
+    `${esc(c.area || "地域不明")}<br>` +
+    `性別: ${esc(c.gender || "-")}／年代: ${esc(c.age_group || "-")}<br>` +
+    `登録: ${esc(c.registered_at || "-")}`
+  );
+}
+
+function buildControls() {
+  // --- 新聞社トグル（右上） ---
+  const FilterCtl = L.Control.extend({
+    options: { position: "topright" },
+    onAdd: function () {
+      const div = L.DomUtil.create("div", "panel");
+      div.id = "filterPanel";
+      let html = "<h3>新聞社の表示</h3>";
+      Object.keys(colorOf).forEach((np) => {
+        html +=
+          `<label><input type="checkbox" data-np="${esc(np)}" checked>` +
+          `<span class="swatch" style="background:${colorOf[np]}"></span>` +
+          `<span>${esc(np)}</span></label>`;
+      });
+      div.innerHTML = html;
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.disableScrollPropagation(div);
+      div.querySelectorAll("input[type=checkbox]").forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const np = cb.getAttribute("data-np");
+          if (cb.checked) map.addLayer(layers[np]);
+          else map.removeLayer(layers[np]);
+        });
+      });
+      return div;
+    },
+  });
+  map.addControl(new FilterCtl());
+
+  // --- 集計（左下） ---
+  const SummaryCtl = L.Control.extend({
+    options: { position: "bottomleft" },
+    onAdd: function () {
+      const div = L.DomUtil.create("div", "panel");
+      div.id = "summaryPanel";
+      let rows = "";
+      Object.keys(colorOf).forEach((np) => {
+        rows +=
+          `<tr><td><span class="swatch" style="background:${colorOf[np]}"></span> ${esc(np)}</td>` +
+          `<td class="cnt">${countOf[np]}</td></tr>`;
+      });
+      div.innerHTML =
+        `<h3>集計</h3><div>合計 <span class="total">${grandTotal}</span> 件</div>` +
+        `<table>${rows}</table>`;
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    },
+  });
+  map.addControl(new SummaryCtl());
+
+  // --- 凡例（右下） ---
+  const LegendCtl = L.Control.extend({
+    options: { position: "bottomright" },
+    onAdd: function () {
+      const div = L.DomUtil.create("div", "panel");
+      div.id = "legendPanel";
+      let rows =
+        `<div class="row"><span class="store-pin" style="width:12px;height:12px;border-width:2px"></span> ${esc(STORE.name)}</div>`;
+      Object.keys(colorOf).forEach((np) => {
+        rows += `<div class="row"><span class="swatch" style="background:${colorOf[np]}"></span> ${esc(np)}</div>`;
+      });
+      div.innerHTML = `<h3>凡例</h3>${rows}<div class="note">円＝来店客（新聞社別）</div>`;
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    },
+  });
+  map.addControl(new LegendCtl());
+}
+
+// ===== データ読み込み =====
+fetch("data/customers.json?_=" + Date.now())
+  .then((r) => r.json())
+  .then((data) => {
+    const customers = data.customers || [];
+    grandTotal = customers.length;
+
+    if (grandTotal === 0) {
+      const msg = L.DomUtil.create("div", "empty-msg", document.body);
+      msg.innerHTML = "まだ来店客データがありません。<br>フォームから登録されると、ここに表示されます。";
+      return;
+    }
+
+    // 新聞社カテゴリを抽出
+    const newspapers = [...new Set(customers.map((c) => c.newspaper || "未回答"))];
+    assignColors(newspapers);
+    newspapers.forEach((np) => {
+      layers[np] = L.layerGroup().addTo(map);
+      countOf[np] = 0;
+    });
+
+    // 来店客ピン（新聞社別の色付き円）
+    customers.forEach((c) => {
+      const np = c.newspaper || "未回答";
+      countOf[np] = (countOf[np] || 0) + 1;
+      L.circleMarker([c.lat, c.lng], {
+        radius: 7,
+        color: "#fff",
+        weight: 1.5,
+        fillColor: colorOf[np] || FALLBACK_COLOR,
+        fillOpacity: 0.85,
+      })
+        .bindPopup(popupHtml(c))
+        .addTo(layers[np]);
+    });
+
+    buildControls();
+  })
+  .catch((err) => {
+    const msg = L.DomUtil.create("div", "empty-msg", document.body);
+    msg.textContent = "データの読み込みに失敗しました: " + err;
+  });
+</script>
+</body>
+</html>
