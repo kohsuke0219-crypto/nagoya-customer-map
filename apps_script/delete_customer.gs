@@ -48,11 +48,16 @@ function json_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+// シートの全セルを表示文字列で取得（getDisplayValues は Range のメソッド）
+function sheetValues_(sh) {
+  return sh.getDataRange().getDisplayValues();
+}
+
 // フォーム回答シートを探す（郵便番号の列を持つ最初のシート）
 function responsesSheet_() {
   const sheets = SpreadsheetApp.getActiveSpreadsheet().getSheets();
   for (let i = 0; i < sheets.length; i++) {
-    const values = sheets[i].getDisplayValues();
+    const values = sheetValues_(sheets[i]);
     if (values.length >= 1 && headerMap_(values[0]).postal != null) return sheets[i];
   }
   return sheets[0];
@@ -101,7 +106,7 @@ function recordId_(row, m) {
 // 動作確認用: ブラウザで exec URL を開くと件数などが見える
 function doGet(e) {
   const sh = responsesSheet_();
-  const values = sh.getDisplayValues();
+  const values = sheetValues_(sh);
   const m = values.length ? headerMap_(values[0]) : {};
   const out = { ok: true, sheet: sh.getName(), dataRows: Math.max(0, values.length - 1) };
   if (e && e.parameter && e.parameter.debug) {
@@ -121,7 +126,7 @@ function doPost(e) {
     if (!body.id) return json_({ ok: false, error: 'no id' });
 
     const sh = responsesSheet_();
-    const values = sh.getDisplayValues();
+    const values = sheetValues_(sh);
     if (values.length < 2) return json_({ ok: true, deleted: 0 });
 
     const m = headerMap_(values[0]);
