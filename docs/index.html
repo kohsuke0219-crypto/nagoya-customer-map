@@ -396,7 +396,7 @@ const UpdateCtl = L.Control.extend({
     L.DomEvent.disableClickPropagation(div);
     updateBtnEl = div.querySelector("#updateBtn");
     updateStatusEl = div.querySelector("#updateStatus");
-    updateBtnEl.addEventListener("click", () => loadData({ force: true }));
+    updateBtnEl.addEventListener("click", () => onUpdateClick());
     div.querySelector("#gearBtn").addEventListener("click", () => {
       const cfg = ensureDelConfig();
       if (cfg) toast("削除の設定を保存しました");
@@ -528,6 +528,75 @@ function loadData(opts = {}) {
     })
     .finally(() => {
       if (updateBtnEl) updateBtnEl.disabled = false;
+    });
+}
+
+// ===== 「今すぐ反映」: ビルドを起動 → 完成を待って地図を更新 =====
+// 更新ボタン押下時の処理。削除設定(URL/合言葉)があればビルドを起動し、
+// customers.json が更新されるまで自動でポーリングする。未設定なら通常の再読込。
+function onUpdateClick() {
+  const cfg = getDelConfig();
+  if (!cfg.url || !cfg.token) {
+    // バックエンド未設定 → これまで通りの再読込のみ（反映は次の自動ビルド後）
+    loadData({ force: true });
+    return;
+  }
+  if (updateBtnEl) updateBtnEl.disabled = true;
+  setStatus("反映中… (約1〜2分)", false);
+  const prevGen = lastData ? (lastData.generated_at || "") : "";
+
+  fetch(cfg.url, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ kind: "rebuild", token: cfg.token }),
+  })
+    .then((r) => r.json())
+    .then((res) => {
+      if (res && res.ok) {
+        pollForUpdate(prevGen, 0);           // ビルド起動成功 → 完成待ち
+      } else {
+        // 起動できない（GITHUB_TOKEN未設定など）→ 通常の再読込にフォールバック
+        toast((res && res.error) ? ("反映起動: " + res.error) : "反映を起動できませんでした");
+        loadData({ force: true });
+      }
+    })
+    .catch(() => { loadData({ force: true }); });
+}
+
+// customers.json の generated_at が変わるまで一定間隔で確認する
+function pollForUpdate(prevGen, attempt) {
+  const MAX = 12;           // 12回 × 15秒 ≒ 3分
+  const INTERVAL = 15000;
+  fetch("data/customers.json?_=" + Date.now())
+    .then((r) => r.json())
+    .then((data) => {
+      const gen = data.generated_at || "";
+      if (gen && gen !== prevGen) {
+        // ビルド完了 → 反映
+        render(data);
+        lastSignature = signatureOf(data);
+        const t = fmtGenerated(gen);
+        setStatus("反映しました（データ更新 " + t + "）", true);
+        setTimeout(() => setStatus("データ更新 " + t, false), 2600);
+        if (updateBtnEl) updateBtnEl.disabled = false;
+        return;
+      }
+      if (attempt >= MAX) {
+        // 変化なし: 新規データが無かった or ビルドがまだ（データ未変更なら更新されない仕様）
+        setStatus("完了（新しいデータはありませんでした）", false);
+        if (updateBtnEl) updateBtnEl.disabled = false;
+        return;
+      }
+      setStatus("反映中… (" + ((attempt + 1) * 15) + "秒経過)", false);
+      setTimeout(() => pollForUpdate(prevGen, attempt + 1), INTERVAL);
+    })
+    .catch(() => {
+      if (attempt >= MAX) {
+        setStatus("反映の確認に失敗しました", false);
+        if (updateBtnEl) updateBtnEl.disabled = false;
+        return;
+      }
+      setTimeout(() => pollForUpdate(prevGen, attempt + 1), INTERVAL);
     });
 }
 

@@ -31,6 +31,37 @@
 // ★合言葉。マップの「トークン」欄と同じ値にする。空にすると無認証（非推奨）。
 const TOKEN = '';
 
+// 「今すぐ反映」用: GitHub Actions のビルドを起動する設定。
+// GITHUB_TOKEN は「プロジェクトの設定 > スクリプト プロパティ」に登録する
+// （コードには書かない）。未登録なら「今すぐ反映」は無効（通常の再読込にフォールバック）。
+const GH_OWNER = 'kohsuke0219-crypto';
+const GH_REPO = 'nagoya-customer-map';
+const GH_WORKFLOW = 'update.yml';
+const GH_REF = 'master';
+
+// GitHub Actions の update.yml を起動（成功で 204）
+function triggerRebuild_() {
+  const token = PropertiesService.getScriptProperties().getProperty('GITHUB_TOKEN');
+  if (!token) return { ok: false, error: 'GITHUB_TOKEN 未設定' };
+  const url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO +
+    '/actions/workflows/' + GH_WORKFLOW + '/dispatches';
+  const res = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'nagoya-customer-map',
+    },
+    payload: JSON.stringify({ ref: GH_REF }),
+    muteHttpExceptions: true,
+  });
+  const code = res.getResponseCode();
+  if (code === 204) return { ok: true };
+  return { ok: false, error: 'GitHub ' + code + ': ' + res.getContentText() };
+}
+
 // customers.json の id と一致させるフィールドの順番（変更しないこと）
 // Python: _ID_FIELDS = (postal_code, chome, gender, age_group, newspaper, registered_at)
 const FIELD_KEYWORDS = [
@@ -122,7 +153,9 @@ function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (TOKEN && body.token !== TOKEN) return json_({ ok: false, error: 'unauthorized' });
-    if ((body.kind || '') !== 'delete') return json_({ ok: false, error: 'unknown kind' });
+    const kind = body.kind || '';
+    if (kind === 'rebuild') return json_(triggerRebuild_());  // 「今すぐ反映」
+    if (kind !== 'delete') return json_({ ok: false, error: 'unknown kind' });
     if (!body.id) return json_({ ok: false, error: 'no id' });
 
     const sh = responsesSheet_();
