@@ -57,10 +57,15 @@
     border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(15,23,42,0.15); flex: none;
   }
 
-  /* 新聞社トグル（右上） */
-  #filterPanel { max-height: 46vh; overflow-y: auto; max-width: 200px; }
-  #filterPanel label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0; }
-  #filterPanel input { width: 18px; height: 18px; accent-color: var(--brand); }
+  /* 絞り込み（右上） */
+  #filterPanel { max-height: 62vh; overflow-y: auto; max-width: 210px; }
+  #filterPanel label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 3px 0; }
+  #filterPanel input { width: 17px; height: 17px; accent-color: var(--brand); flex: none; }
+  .filter-group { margin-top: 10px; }
+  .filter-group h4 {
+    margin: 0 0 3px; font-size: 11px; font-weight: 700; color: var(--muted);
+    letter-spacing: 0.03em;
+  }
 
   /* 集計（左下） */
   #summaryPanel { min-width: 168px; }
@@ -184,6 +189,21 @@ const PALETTE = [
 ];
 const FALLBACK_COLOR = "#64748b";
 
+// 性別・年代の表示順（この順で絞り込みチェックボックスを並べる）
+const GENDER_ORDER = ["男性", "女性", "その他"];
+const AGE_ORDER = ["10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
+
+// 既知の順番→前に、未知の値→後ろ（名前順）で並べる
+function orderValues(values, order) {
+  const set = new Set(values);
+  const out = order.filter((v) => set.has(v));
+  values
+    .filter((v) => !order.includes(v))
+    .sort((a, b) => a.localeCompare(b, "ja"))
+    .forEach((v) => out.push(v));
+  return out;
+}
+
 // ===== 地図初期化 =====
 const map = L.map("map", { zoomControl: true }).setView(INIT_CENTER, INIT_ZOOM);
 // CartoDB Positron（淡いグレー基調）でピンを際立たせる
@@ -211,11 +231,16 @@ L.marker([STORE.lat, STORE.lng], { icon: storeIcon, zIndexOffset: 1000 })
   .bindTooltip("守山大森店", { permanent: true, direction: "bottom", offset: [0, 15], className: "store-label" })
   .bindPopup(`<b>${STORE.name}</b><br>（店舗）`);
 
-// ===== 動的カテゴリ＋レイヤー =====
-let layers = {};         // newspaper -> L.layerGroup
-let colorOf = {};        // newspaper -> color
-let countOf = {};        // newspaper -> 件数
-let grandTotal = 0;
+// ===== 動的カテゴリ＋複合フィルタ =====
+let customerLayer = null;   // 表示中のピンをまとめる layerGroup
+let markersMeta = [];       // [{marker, np, gender, age}]
+let colorOf = {};           // newspaper -> color
+let countOf = {};           // newspaper -> 表示中の件数
+let grandTotal = 0;         // 表示中の合計件数
+
+// 絞り込みの値リストと、現在有効な値の集合（新聞社×性別×年代のAND条件）
+let npValues = [], genderValues = [], ageValues = [];
+let activeNp = new Set(), activeGender = new Set(), activeAge = new Set();
 
 // 再描画のために保持するコントロール/要素の参照
 let filterCtl = null, summaryCtl = null, legendCtl = null;
@@ -364,56 +389,101 @@ function deleteCustomer(marker, btn) {
     });
 }
 
-// 1件分のピンを地図と集計から取り除く（トグル状態は維持）
+// 1件分のピンを地図と集計から取り除く（フィルタ状態は維持）
 function removeCustomerMarker(marker, c) {
-  const np = c.newspaper || "未回答";
-  if (layers[np]) layers[np].removeLayer(marker);
-  if (countOf[np] != null) countOf[np] = Math.max(0, countOf[np] - 1);
-  grandTotal = Math.max(0, grandTotal - 1);
-  refreshSummary();
+  markersMeta = markersMeta.filter((m) => m.marker !== marker);
+  if (customerLayer) customerLayer.removeLayer(marker);
+  applyFilters();
 }
 
 function summaryHtml() {
   let rows = "";
-  Object.keys(colorOf).forEach((np) => {
+  npValues.forEach((np) => {
     rows +=
       `<tr><td><span class="swatch" style="background:${colorOf[np]}"></span> ${esc(np)}</td>` +
       `<td class="cnt">${countOf[np] || 0}</td></tr>`;
   });
-  return `<h3>集計</h3>` +
+  return `<h3>集計（表示中）</h3>` +
     `<div class="total-row"><span class="total">${grandTotal}</span><span>件</span></div>` +
     `<table>${rows}</table>`;
 }
 
-// 集計パネルだけを再描画（削除時にトグル状態を崩さず件数を更新）
+function legendHtml() {
+  let rows =
+    `<div class="row"><span class="store-dot"></span>` +
+    `<span class="lg-name">${esc(STORE.name)}</span></div>`;
+  npValues.forEach((np) => {
+    rows +=
+      `<div class="row"><span class="swatch" style="background:${colorOf[np]}"></span>` +
+      `<span class="lg-name">${esc(np)}</span>` +
+      `<span class="lg-cnt">${countOf[np] || 0}件</span></div>`;
+  });
+  return `<h3>凡例</h3>${rows}<div class="note">円＝来店客（新聞社別）</div>`;
+}
+
+// 集計・凡例パネルを最新の件数で再描画（フィルタ状態は崩さない）
 function refreshSummary() {
-  if (summaryCtl && summaryCtl.getContainer()) {
-    summaryCtl.getContainer().innerHTML = summaryHtml();
-  }
+  if (summaryCtl && summaryCtl.getContainer()) summaryCtl.getContainer().innerHTML = summaryHtml();
+}
+function refreshLegend() {
+  if (legendCtl && legendCtl.getContainer()) legendCtl.getContainer().innerHTML = legendHtml();
+}
+
+// 現在のフィルタ（新聞社×性別×年代のAND）で表示ピンと件数を更新
+function applyFilters() {
+  if (!customerLayer) return;
+  customerLayer.clearLayers();
+  countOf = {};
+  npValues.forEach((np) => { countOf[np] = 0; });
+  grandTotal = 0;
+  markersMeta.forEach((m) => {
+    const visible =
+      activeNp.has(m.np) && activeGender.has(m.gender) && activeAge.has(m.age);
+    if (visible) {
+      customerLayer.addLayer(m.marker);
+      countOf[m.np] = (countOf[m.np] || 0) + 1;
+      grandTotal++;
+    }
+  });
+  refreshSummary();
+  refreshLegend();
+}
+
+// 絞り込みチェックボックス群のHTMLを作る
+function filterGroupHtml(title, values, kind, withSwatch) {
+  let h = `<div class="filter-group"><h4>${esc(title)}</h4>`;
+  values.forEach((v) => {
+    const sw = withSwatch
+      ? `<span class="swatch" style="background:${colorOf[v]}"></span>`
+      : "";
+    h +=
+      `<label><input type="checkbox" data-kind="${kind}" data-val="${esc(v)}" checked>` +
+      `${sw}<span>${esc(v)}</span></label>`;
+  });
+  return h + "</div>";
 }
 
 function buildControls() {
-  // --- 新聞社トグル（右上） ---
+  // --- 絞り込み（右上）: 新聞社 × 性別 × 年代 ---
   const FilterCtl = L.Control.extend({
     options: { position: "topright" },
     onAdd: function () {
       const div = L.DomUtil.create("div", "panel");
       div.id = "filterPanel";
-      let html = "<h3>新聞社の表示</h3>";
-      Object.keys(colorOf).forEach((np) => {
-        html +=
-          `<label><input type="checkbox" data-np="${esc(np)}" checked>` +
-          `<span class="swatch" style="background:${colorOf[np]}"></span>` +
-          `<span>${esc(np)}</span></label>`;
-      });
-      div.innerHTML = html;
+      div.innerHTML =
+        "<h3>絞り込み</h3>" +
+        filterGroupHtml("新聞社", npValues, "np", true) +
+        filterGroupHtml("性別", genderValues, "gender", false) +
+        filterGroupHtml("年代", ageValues, "age", false);
       L.DomEvent.disableClickPropagation(div);
       L.DomEvent.disableScrollPropagation(div);
       div.querySelectorAll("input[type=checkbox]").forEach((cb) => {
         cb.addEventListener("change", () => {
-          const np = cb.getAttribute("data-np");
-          if (cb.checked) map.addLayer(layers[np]);
-          else map.removeLayer(layers[np]);
+          const kind = cb.getAttribute("data-kind");
+          const val = cb.getAttribute("data-val");
+          const set = kind === "np" ? activeNp : kind === "gender" ? activeGender : activeAge;
+          if (cb.checked) set.add(val); else set.delete(val);
+          applyFilters();
         });
       });
       return div;
@@ -442,16 +512,7 @@ function buildControls() {
     onAdd: function () {
       const div = L.DomUtil.create("div", "panel");
       div.id = "legendPanel";
-      let rows =
-        `<div class="row"><span class="store-dot"></span>` +
-        `<span class="lg-name">${esc(STORE.name)}</span></div>`;
-      Object.keys(colorOf).forEach((np) => {
-        rows +=
-          `<div class="row"><span class="swatch" style="background:${colorOf[np]}"></span>` +
-          `<span class="lg-name">${esc(np)}</span>` +
-          `<span class="lg-cnt">${countOf[np] || 0}件</span></div>`;
-      });
-      div.innerHTML = `<h3>凡例</h3>${rows}<div class="note">円＝来店客（新聞社別）</div>`;
+      div.innerHTML = legendHtml();
       L.DomEvent.disableClickPropagation(div);
       return div;
     },
@@ -488,11 +549,13 @@ map.addControl(new UpdateCtl());
 
 // ===== 描画のクリア＆再構築 =====
 function clearRender() {
-  Object.values(layers).forEach((lg) => map.removeLayer(lg));
-  layers = {};
+  if (customerLayer) { map.removeLayer(customerLayer); customerLayer = null; }
+  markersMeta = [];
   colorOf = {};
   countOf = {};
   grandTotal = 0;
+  npValues = []; genderValues = []; ageValues = [];
+  activeNp = new Set(); activeGender = new Set(); activeAge = new Set();
   if (filterCtl) { map.removeControl(filterCtl); filterCtl = null; }
   if (summaryCtl) { map.removeControl(summaryCtl); summaryCtl = null; }
   if (legendCtl) { map.removeControl(legendCtl); legendCtl = null; }
@@ -517,16 +580,20 @@ function render(data) {
     return;
   }
 
+  // 値リストを用意（新聞社は色割り当てのため assignColors がソート）
   const newspapers = [...new Set(customers.map((c) => c.newspaper || "未回答"))];
   assignColors(newspapers);
-  newspapers.forEach((np) => {
-    layers[np] = L.layerGroup().addTo(map);
-    countOf[np] = 0;
-  });
+  npValues = newspapers.slice();
+  genderValues = orderValues([...new Set(customers.map((c) => c.gender || "未回答"))], GENDER_ORDER);
+  ageValues = orderValues([...new Set(customers.map((c) => c.age_group || "未回答"))], AGE_ORDER);
+  // 初期状態は全て表示
+  activeNp = new Set(npValues);
+  activeGender = new Set(genderValues);
+  activeAge = new Set(ageValues);
 
-  customers.forEach((c) => {
+  customerLayer = L.layerGroup().addTo(map);
+  markersMeta = customers.map((c) => {
     const np = c.newspaper || "未回答";
-    countOf[np] = (countOf[np] || 0) + 1;
     const color = colorOf[np] || FALLBACK_COLOR;
     const icon = L.divIcon({
       className: "customer-pin-icon",
@@ -537,10 +604,11 @@ function render(data) {
     });
     const marker = L.marker([c.lat, c.lng], { icon }).bindPopup(popupHtml(c));
     marker._cust = c;            // 削除時に参照する
-    marker.addTo(layers[np]);
+    return { marker, np, gender: c.gender || "未回答", age: c.age_group || "未回答" };
   });
 
   buildControls();
+  applyFilters();   // 表示ピン＋件数を反映
 }
 
 // 現在のJSONに無い削除IDはもう不要（サーバ側で消えた）→ ローカル記録から除去
