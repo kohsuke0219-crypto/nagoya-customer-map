@@ -132,7 +132,7 @@ def build(
         key = r["newspaper"] or "未回答"
         by_newspaper[key] = by_newspaper.get(key, 0) + 1
 
-    store = {"name": "買取大吉 守山店", "lat": 35.2017705, "lng": 136.9961965}
+    store = {"name": "買取大吉 守山大森店", "lat": 35.2017705, "lng": 136.9961965}
     # generated_at 以外の「実データ」部分。これが前回と同じなら書き換えない
     # （10分ごとの自動実行で無意味なコミットを量産しないため）。
     data_body = {

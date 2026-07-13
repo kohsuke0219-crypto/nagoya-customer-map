@@ -51,7 +51,7 @@ JAPANPOST_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 # geolonia の静的 JSON API（町丁目レベルの緯度経度）
 GEOLONIA_BASE = "https://geolonia.github.io/japanese-addresses/api/ja"
 
-# 都道府県コード(2桁) → 日本郵便CSVのファイル名（守山店の商圏＝愛知が主）
+# 都道府県コード(2桁) → 日本郵便CSVのファイル名（守山大森店の商圏＝愛知が主）
 PREF_ZIP_FILES = {
     "23": "23aichi.zip",
 }

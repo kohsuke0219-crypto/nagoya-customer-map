@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
-<title>買取大吉 守山店 来店客マップ</title>
+<title>買取大吉 守山大森店 来店客マップ</title>
 <link
   rel="stylesheet"
   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -151,7 +151,7 @@
 </head>
 <body>
 <div id="titlebar">
-  買取大吉 守山店 来店客マップ
+  買取大吉 守山大森店 来店客マップ
   <small>新聞折込チラシ効果分析（位置は個人情報保護のため約100m丸め）</small>
 </div>
 <div id="map"></div>
@@ -163,7 +163,7 @@
 ></script>
 <script>
 // ===== 設定 =====
-const STORE = { name: "買取大吉 守山店", lat: 35.2017705, lng: 136.9961965 };
+const STORE = { name: "買取大吉 守山大森店", lat: 35.2017705, lng: 136.9961965 };
 const INIT_CENTER = [STORE.lat, STORE.lng];
 const INIT_ZOOM = 14;
 
@@ -195,7 +195,7 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
   maxZoom: 20,
 }).addTo(map);
 
-// 店舗マーカー（赤い丸に家アイコン）＋「守山店」ラベルを常時表示
+// 店舗マーカー（赤い丸に家アイコン）＋「守山大森店」ラベルを常時表示
 const HOUSE_SVG =
   '<svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true">' +
   '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
@@ -208,7 +208,7 @@ const storeIcon = L.divIcon({
 });
 L.marker([STORE.lat, STORE.lng], { icon: storeIcon, zIndexOffset: 1000 })
   .addTo(map)
-  .bindTooltip("守山店", { permanent: true, direction: "bottom", offset: [0, 15], className: "store-label" })
+  .bindTooltip("守山大森店", { permanent: true, direction: "bottom", offset: [0, 15], className: "store-label" })
   .bindPopup(`<b>${STORE.name}</b><br>（店舗）`);
 
 // ===== 動的カテゴリ＋レイヤー =====
