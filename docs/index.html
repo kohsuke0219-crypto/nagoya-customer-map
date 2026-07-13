@@ -13,94 +13,139 @@
 />
 <style>
   :root {
-    /* 買取大吉ブランドカラー（公式ロゴ・サイト実測）。紺=メイン / 金=アクセント / 赤=補助 */
-    --brand: #153C96;        /* 濃紺（メイン） */
-    --brand-dark: #100169;   /* ロゴの深紺 */
-    --brand-gold: #F2C230;   /* 金（大吉らしさ・強調枠） */
-    --brand-red: #CE0000;    /* 赤（補助アクセント） */
-    --panel-bg: rgba(255, 255, 255, 0.95);
-    --panel-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+    /* 買取大吉ブランドカラー（公式ロゴ・サイト実測）＋ UIアクセント */
+    --brand: #153C96;        /* 濃紺（見出し・数字） */
+    --brand-dark: #100169;   /* ロゴの深紺（タイトルバー） */
+    --brand-gold: #F2C230;   /* 金（大吉らしさ） */
+    --store-red: #dc2626;    /* 店舗マーカーの赤 */
+    --ink: #1f2937;          /* 本文テキスト */
+    --muted: #6b7280;        /* 補助テキスト */
+    --panel-bg: #ffffff;
+    --panel-shadow: 0 2px 14px rgba(15, 23, 42, 0.16);
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+      "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   }
-  html, body { margin: 0; height: 100%; font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif; }
-  #map { position: absolute; inset: 0; }
+  html, body { margin: 0; height: 100%; font-family: var(--font); }
+  #map { position: absolute; inset: 0; background: #ebedf0; }
 
   /* 見出しバー */
   #titlebar {
     position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
     background: var(--brand-dark); color: #fff;
-    padding: 10px 14px; font-size: 18px; font-weight: bold;
+    padding: 11px 14px; font-size: 18px; font-weight: 700;
     border-bottom: 3px solid var(--brand-gold);
     box-shadow: var(--panel-shadow); text-align: center;
     letter-spacing: 0.02em;
   }
-  #titlebar small { display: block; font-size: 12px; font-weight: normal; opacity: 0.9; margin-top: 2px; }
+  #titlebar small { display: block; font-size: 12px; font-weight: 400; opacity: 0.85; margin-top: 3px; }
 
-  /* 共通パネル */
+  /* 共通パネル（白 + 影 + 角丸） */
   .panel {
-    background: var(--panel-bg); border-radius: 8px; box-shadow: var(--panel-shadow);
-    padding: 10px 12px; font-size: 13px; line-height: 1.5; color: #222;
+    background: var(--panel-bg); border-radius: 12px; box-shadow: var(--panel-shadow);
+    padding: 14px 16px; font-size: 13px; line-height: 1.55; color: var(--ink);
+    border: 1px solid rgba(15, 23, 42, 0.06);
   }
-  .panel h3 { margin: 0 0 6px; font-size: 13px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+  .panel h3 {
+    margin: 0 0 9px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--muted); text-transform: uppercase;
+    border-bottom: 1px solid #eef0f3; padding-bottom: 7px;
+  }
+
+  /* 色サンプル（円） */
+  .swatch {
+    display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(15,23,42,0.15); flex: none;
+  }
 
   /* 新聞社トグル（右上） */
-  #filterPanel { max-height: 45vh; overflow-y: auto; max-width: 190px; }
-  #filterPanel label { display: flex; align-items: center; gap: 7px; cursor: pointer; padding: 3px 0; }
-  #filterPanel input { width: 18px; height: 18px; }
-  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.25); flex: none; }
+  #filterPanel { max-height: 46vh; overflow-y: auto; max-width: 200px; }
+  #filterPanel label { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 0; }
+  #filterPanel input { width: 18px; height: 18px; accent-color: var(--brand); }
 
   /* 集計（左下） */
-  #summaryPanel { min-width: 150px; }
-  #summaryPanel .total { font-size: 22px; font-weight: bold; color: var(--brand); }
-  #summaryPanel table { width: 100%; border-collapse: collapse; margin-top: 4px; }
-  #summaryPanel td { padding: 1px 2px; }
-  #summaryPanel td.cnt { text-align: right; font-variant-numeric: tabular-nums; font-weight: bold; }
+  #summaryPanel { min-width: 168px; }
+  #summaryPanel .total-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  #summaryPanel .total { font-size: 30px; font-weight: 800; color: var(--brand); line-height: 1; font-variant-numeric: tabular-nums; }
+  #summaryPanel table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  #summaryPanel td { padding: 2px 2px; }
+  #summaryPanel td.cnt { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: #374151; }
 
   /* 凡例（右下） */
-  #legendPanel .row { display: flex; align-items: center; gap: 7px; padding: 2px 0; }
-  .note { font-size: 11px; color: #777; margin-top: 6px; }
+  #legendPanel .row { display: flex; align-items: center; gap: 9px; padding: 3px 0; }
+  #legendPanel .row .lg-name { flex: 1 1 auto; }
+  #legendPanel .row .lg-cnt { font-weight: 700; font-variant-numeric: tabular-nums; color: #374151; }
+  .store-dot {
+    display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+    background: var(--store-red); border: 2px solid #fff;
+    box-shadow: 0 0 0 1px rgba(15,23,42,0.2); flex: none;
+  }
+  .note { font-size: 11px; color: #9aa1ac; margin-top: 8px; }
 
   /* 更新ボタン（左上） */
-  #updatePanel { text-align: center; min-width: 130px; }
+  #updatePanel { text-align: center; min-width: 138px; }
   #updateBtn {
-    font-size: 15px; font-weight: bold; padding: 9px 14px; width: 100%;
-    background: var(--brand); color: #fff; border: none; border-radius: 8px;
+    font-size: 15px; font-weight: 700; padding: 10px 14px; width: 100%;
+    background: var(--brand); color: #fff; border: none; border-radius: 9px;
     cursor: pointer; line-height: 1.2;
   }
   #updateBtn:active { transform: translateY(1px); }
   #updateBtn:disabled { opacity: 0.6; cursor: default; }
-  #updateStatus { font-size: 11px; color: #555; margin-top: 6px; white-space: nowrap; }
-  #updateStatus.flash { color: #0a8a3a; font-weight: bold; }
+  #updateStatus { font-size: 11px; color: var(--muted); margin-top: 7px; white-space: nowrap; }
+  #updateStatus.flash { color: #0a8a3a; font-weight: 700; }
 
-  .store-pin {
-    width: 20px; height: 20px; background: var(--brand);
-    border: 3px solid var(--brand-gold); box-shadow: 0 0 0 1.5px rgba(0,0,0,0.45);
+  /* 来店客ピン（二重円） */
+  .customer-pin-icon { background: transparent; border: none; }
+  .customer-pin {
+    width: 14px; height: 14px; border-radius: 50%; box-sizing: border-box;
+    border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: transform 0.2s; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
   }
-  .leaflet-popup-content { font-size: 13px; line-height: 1.6; }
+  .customer-pin:hover { transform: scale(1.3); }
+  .customer-pin-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
+
+  /* 店舗マーカー（赤い丸に家アイコン） */
+  .store-marker { background: transparent; border: none; }
+  .store-marker-inner {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--store-red);
+    border: 3px solid #fff; box-shadow: 0 3px 9px rgba(0,0,0,0.45);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .store-marker-inner svg { width: 13px; height: 13px; display: block; }
+  .leaflet-tooltip.store-label {
+    background: #fff; color: var(--store-red); font-weight: 700; font-size: 12px;
+    font-family: var(--font); border: none; border-radius: 7px; padding: 2px 9px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.28); white-space: nowrap;
+  }
+  .leaflet-tooltip.store-label::before { display: none; }
+
+  .leaflet-popup-content { font-size: 13px; line-height: 1.65; }
   .leaflet-popup-content b { color: var(--brand); }
+  .leaflet-popup-content-wrapper { border-radius: 10px; }
   /* 削除ボタン（ポップアップ内） */
   .del-btn {
-    margin-top: 8px; display: inline-block; font-size: 12px; font-weight: bold;
-    color: #fff; background: var(--brand-red); border: none; border-radius: 6px;
-    padding: 5px 10px; cursor: pointer;
+    margin-top: 9px; display: inline-block; font-size: 12px; font-weight: 700;
+    color: #fff; background: var(--store-red); border: none; border-radius: 7px;
+    padding: 6px 11px; cursor: pointer;
   }
   .del-btn:disabled { opacity: 0.5; cursor: default; }
   /* トースト通知 */
   #toast {
-    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-    z-index: 2000; background: rgba(20,20,20,0.9); color: #fff; padding: 9px 16px;
-    border-radius: 20px; font-size: 13px; box-shadow: var(--panel-shadow);
+    position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+    z-index: 2000; background: rgba(17,24,39,0.92); color: #fff; padding: 10px 18px;
+    border-radius: 22px; font-size: 13px; box-shadow: var(--panel-shadow);
     opacity: 0; transition: opacity 0.25s; pointer-events: none; white-space: nowrap;
   }
   #toast.show { opacity: 1; }
-  /* 設定ボタン（更新パネル内の小さな歯車） */
+  /* 設定ボタン（更新パネル内の小さなリンク） */
   #gearBtn {
-    margin-top: 6px; font-size: 11px; color: var(--brand); background: none;
+    margin-top: 8px; font-size: 11px; color: var(--brand); background: none;
     border: none; cursor: pointer; text-decoration: underline; padding: 0;
   }
   .empty-msg {
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    z-index: 1000; background: var(--panel-bg); padding: 16px 22px; border-radius: 8px;
-    box-shadow: var(--panel-shadow); font-size: 15px; color: #444; text-align: center;
+    z-index: 1000; background: var(--panel-bg); padding: 18px 24px; border-radius: 12px;
+    box-shadow: var(--panel-shadow); font-size: 15px; color: #374151; text-align: center;
   }
 </style>
 </head>
@@ -122,29 +167,48 @@ const STORE = { name: "買取大吉 守山店", lat: 35.2017705, lng: 136.996196
 const INIT_CENTER = [STORE.lat, STORE.lng];
 const INIT_ZOOM = 14;
 
-// 新聞社カテゴリに自動割り当てる10色パレット（見分けやすい色）
+// 新聞社ごとの色（地図の道路色と被らない配色）。事前定義に無い新聞社は
+// PALETTE から順に割り当てる（動的カテゴリ対応）。
+const NEWSPAPER_COLORS = {
+  "中日新聞": "#7c3aed",       // 濃紫
+  "朝日新聞": "#0d9488",       // ティール
+  "読売新聞": "#ea580c",       // オレンジ
+  "毎日新聞": "#db2777",       // ピンク
+  "日本経済新聞": "#65a30d",   // 緑
+  "覚えていない": "#64748b",   // グレー
+  "その他": "#f59e0b",         // アンバー
+};
 const PALETTE = [
-  "#E63946", "#457B9D", "#2A9D8F", "#F4A261", "#9B5DE5",
-  "#00BBF9", "#F15BB5", "#8AC926", "#BC6C25", "#5C677D",
+  "#7c3aed", "#0d9488", "#ea580c", "#db2777", "#65a30d",
+  "#f59e0b", "#2563eb", "#0891b2", "#c026d3", "#4d7c0f",
 ];
-const FALLBACK_COLOR = "#999999";
+const FALLBACK_COLOR = "#64748b";
 
 // ===== 地図初期化 =====
 const map = L.map("map", { zoomControl: true }).setView(INIT_CENTER, INIT_ZOOM);
-L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+// CartoDB Positron（淡いグレー基調）でピンを際立たせる
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+  attribution:
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
+    '&copy; <a href="https://carto.com/attributions">CARTO</a>',
+  subdomains: "abcd",
+  maxZoom: 20,
 }).addTo(map);
 
-// 店舗マーカー（ブランド紺の四角ピン・金縁）
+// 店舗マーカー（赤い丸に家アイコン）＋「守山店」ラベルを常時表示
+const HOUSE_SVG =
+  '<svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true">' +
+  '<path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>';
 const storeIcon = L.divIcon({
-  className: "",
-  html: '<div class="store-pin"></div>',
-  iconSize: [20, 20],
-  iconAnchor: [10, 10],
+  className: "store-marker",
+  html: '<div class="store-marker-inner">' + HOUSE_SVG + "</div>",
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12],
 });
 L.marker([STORE.lat, STORE.lng], { icon: storeIcon, zIndexOffset: 1000 })
   .addTo(map)
+  .bindTooltip("守山店", { permanent: true, direction: "bottom", offset: [0, 15], className: "store-label" })
   .bindPopup(`<b>${STORE.name}</b><br>（店舗）`);
 
 // ===== 動的カテゴリ＋レイヤー =====
@@ -215,8 +279,19 @@ function ensureDelConfig() {
 function assignColors(newspapers) {
   // 安定した色割り当てのため名前でソート
   newspapers.sort((a, b) => a.localeCompare(b, "ja"));
-  newspapers.forEach((np, i) => {
-    colorOf[np] = PALETTE[i] || FALLBACK_COLOR;
+  const used = new Set();
+  // 1st pass: 事前定義の新聞社色を割り当て
+  newspapers.forEach((np) => {
+    if (NEWSPAPER_COLORS[np]) { colorOf[np] = NEWSPAPER_COLORS[np]; used.add(colorOf[np]); }
+  });
+  // 2nd pass: 事前定義に無い新聞社は未使用のパレット色を順に割り当て
+  let pi = 0;
+  newspapers.forEach((np) => {
+    if (colorOf[np]) return;
+    while (pi < PALETTE.length && used.has(PALETTE[pi])) pi++;
+    colorOf[np] = PALETTE[pi] || FALLBACK_COLOR;
+    used.add(colorOf[np]);
+    pi++;
   });
 }
 
@@ -305,7 +380,8 @@ function summaryHtml() {
       `<tr><td><span class="swatch" style="background:${colorOf[np]}"></span> ${esc(np)}</td>` +
       `<td class="cnt">${countOf[np] || 0}</td></tr>`;
   });
-  return `<h3>集計</h3><div>合計 <span class="total">${grandTotal}</span> 件</div>` +
+  return `<h3>集計</h3>` +
+    `<div class="total-row"><span class="total">${grandTotal}</span><span>件</span></div>` +
     `<table>${rows}</table>`;
 }
 
@@ -367,9 +443,13 @@ function buildControls() {
       const div = L.DomUtil.create("div", "panel");
       div.id = "legendPanel";
       let rows =
-        `<div class="row"><span class="store-pin" style="width:12px;height:12px;border-width:2px"></span> ${esc(STORE.name)}</div>`;
+        `<div class="row"><span class="store-dot"></span>` +
+        `<span class="lg-name">${esc(STORE.name)}</span></div>`;
       Object.keys(colorOf).forEach((np) => {
-        rows += `<div class="row"><span class="swatch" style="background:${colorOf[np]}"></span> ${esc(np)}</div>`;
+        rows +=
+          `<div class="row"><span class="swatch" style="background:${colorOf[np]}"></span>` +
+          `<span class="lg-name">${esc(np)}</span>` +
+          `<span class="lg-cnt">${countOf[np] || 0}件</span></div>`;
       });
       div.innerHTML = `<h3>凡例</h3>${rows}<div class="note">円＝来店客（新聞社別）</div>`;
       L.DomEvent.disableClickPropagation(div);
@@ -447,13 +527,15 @@ function render(data) {
   customers.forEach((c) => {
     const np = c.newspaper || "未回答";
     countOf[np] = (countOf[np] || 0) + 1;
-    const marker = L.circleMarker([c.lat, c.lng], {
-      radius: 7,
-      color: "#fff",
-      weight: 1.5,
-      fillColor: colorOf[np] || FALLBACK_COLOR,
-      fillOpacity: 0.85,
-    }).bindPopup(popupHtml(c));
+    const color = colorOf[np] || FALLBACK_COLOR;
+    const icon = L.divIcon({
+      className: "customer-pin-icon",
+      html: `<div class="customer-pin" style="background:${color}"><span class="customer-pin-dot"></span></div>`,
+      iconSize: [14, 14],
+      iconAnchor: [7, 7],
+      popupAnchor: [0, -8],
+    });
+    const marker = L.marker([c.lat, c.lng], { icon }).bindPopup(popupHtml(c));
     marker._cust = c;            // 削除時に参照する
     marker.addTo(layers[np]);
   });
