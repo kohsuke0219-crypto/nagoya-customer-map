@@ -687,12 +687,14 @@ function loadData(opts = {}) {
 function onUpdateClick() {
   const cfg = getDelConfig();
   if (!cfg.url || !cfg.token) {
-    // バックエンド未設定 → これまで通りの再読込のみ（反映は次の自動ビルド後）
+    // 「今すぐ反映」未設定：ビルドを起動できないので設定を案内し、
+    // 少なくとも確定済みの最新データは読み直す（反映は次の自動更新後）。
+    toast("「今すぐ反映」は未設定です。⚙削除の設定 でURLと合言葉を登録してください");
     loadData({ force: true });
     return;
   }
   if (updateBtnEl) updateBtnEl.disabled = true;
-  setStatus("反映中… (約1〜2分)", false);
+  setStatus("反映を起動中…", false);
   const prevGen = lastData ? (lastData.generated_at || "") : "";
 
   fetch(cfg.url, {
@@ -703,20 +705,26 @@ function onUpdateClick() {
     .then((r) => r.json())
     .then((res) => {
       if (res && res.ok) {
+        setStatus("反映中… ビルド待ち（最大約6分）", false);
         pollForUpdate(prevGen, 0);           // ビルド起動成功 → 完成待ち
       } else {
-        // 起動できない（GITHUB_TOKEN未設定など）→ 通常の再読込にフォールバック
-        toast((res && res.error) ? ("反映起動: " + res.error) : "反映を起動できませんでした");
-        loadData({ force: true });
+        // 起動できない（GITHUB_TOKEN未設定・トークン失効など）→ 原因を明示
+        const e = (res && res.error) ? res.error : "起動に失敗";
+        setStatus("反映エラー: " + e, false);
+        toast("反映を起動できません: " + e);
+        if (updateBtnEl) updateBtnEl.disabled = false;
       }
     })
-    .catch(() => { loadData({ force: true }); });
+    .catch(() => {
+      setStatus("反映の通信に失敗しました（設定URLを確認）", false);
+      if (updateBtnEl) updateBtnEl.disabled = false;
+    });
 }
 
 // customers.json の generated_at が変わるまで一定間隔で確認する
 function pollForUpdate(prevGen, attempt) {
-  const MAX = 12;           // 12回 × 15秒 ≒ 3分
-  const INTERVAL = 15000;
+  const MAX = 18;           // 18回 × 20秒 = 6分（ビルド＋Pages反映を余裕を持って待つ）
+  const INTERVAL = 20000;
   fetch("data/customers.json?_=" + Date.now())
     .then((r) => r.json())
     .then((data) => {
@@ -727,17 +735,18 @@ function pollForUpdate(prevGen, attempt) {
         lastSignature = signatureOf(data);
         const t = fmtGenerated(gen);
         setStatus("反映しました（データ更新 " + t + "）", true);
-        setTimeout(() => setStatus("データ更新 " + t, false), 2600);
+        setTimeout(() => setStatus("データ更新 " + t, false), 3000);
         if (updateBtnEl) updateBtnEl.disabled = false;
         return;
       }
       if (attempt >= MAX) {
-        // 変化なし: 新規データが無かった or ビルドがまだ（データ未変更なら更新されない仕様）
-        setStatus("完了（新しいデータはありませんでした）", false);
+        // まだ反映されていない（ビルド/公開に時間がかかっている、または
+        // 入力データに変化が無かった＝郵便番号不正などで除外された可能性）
+        setStatus("まだ反映されません。1〜2分後にもう一度更新を押してください", false);
         if (updateBtnEl) updateBtnEl.disabled = false;
         return;
       }
-      setStatus("反映中… (" + ((attempt + 1) * 15) + "秒経過)", false);
+      setStatus("反映中… (" + ((attempt + 1) * 20) + "秒/最大360秒)", false);
       setTimeout(() => pollForUpdate(prevGen, attempt + 1), INTERVAL);
     })
     .catch(() => {
