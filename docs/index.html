@@ -11,6 +11,8 @@
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
   crossorigin=""
 />
+<!-- マーカークラスタリング（近接ピンをまとめて件数表示） -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
 <style>
   :root {
     /* 買取大吉ブランドカラー（公式ロゴ・サイト実測）＋ UIアクセント */
@@ -109,6 +111,15 @@
   .customer-pin:hover { transform: scale(1.3); }
   .customer-pin-dot { width: 6px; height: 6px; border-radius: 50%; background: #fff; }
 
+  /* クラスタ（近接ピンをまとめた件数バッジ） */
+  .cluster-icon { background: transparent; border: none; }
+  .cluster-badge {
+    background: var(--brand); color: #fff; border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-family: var(--font); font-variant-numeric: tabular-nums;
+  }
+
   /* 店舗マーカー（赤い丸に家アイコン） */
   .store-marker { background: transparent; border: none; }
   .store-marker-inner {
@@ -166,6 +177,7 @@
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
   crossorigin=""
 ></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script>
 // ===== 設定 =====
 const STORE = { name: "買取大吉 守山大森店", lat: 35.2017705, lng: 136.9961965 };
@@ -562,6 +574,34 @@ function clearRender() {
   if (emptyMsgEl) { emptyMsgEl.remove(); emptyMsgEl = null; }
 }
 
+// クラスタ（まとめバッジ）のアイコン。件数に応じて大きさを変える。
+function clusterIcon(cluster) {
+  const n = cluster.getChildCount();
+  let size = 32, fs = 13;
+  if (n >= 50) { size = 46; fs = 15; }
+  else if (n >= 10) { size = 38; fs = 14; }
+  return L.divIcon({
+    className: "cluster-icon",
+    html: `<div class="cluster-badge" style="width:${size}px;height:${size}px;font-size:${fs}px">${n}</div>`,
+    iconSize: [size, size],
+  });
+}
+
+// 来店客ピンを載せるレイヤー。markercluster があれば近接ピンをまとめる。
+// ズームアウト（ワイド）時は件数バッジ、拡大すると個別ピンに展開。
+function makeCustomerLayer() {
+  if (L.markerClusterGroup) {
+    return L.markerClusterGroup({
+      maxClusterRadius: 45,          // この画面距離(px)以内をまとめる
+      disableClusteringAtZoom: 14,   // 初期ズーム14以上は個別表示、ズームアウトでまとまる
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      iconCreateFunction: clusterIcon,
+    }).addTo(map);
+  }
+  return L.layerGroup().addTo(map);   // 読み込み失敗時のフォールバック
+}
+
 function render(data) {
   clearRender();
   lastData = data;
@@ -591,7 +631,7 @@ function render(data) {
   activeGender = new Set(genderValues);
   activeAge = new Set(ageValues);
 
-  customerLayer = L.layerGroup().addTo(map);
+  customerLayer = makeCustomerLayer();
   markersMeta = customers.map((c) => {
     const np = c.newspaper || "未回答";
     const color = colorOf[np] || FALLBACK_COLOR;
