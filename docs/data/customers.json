@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-07-16T14:56:14+09:00",
+  "generated_at": "2026-07-16T15:14:24+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 5,
+  "total": 6,
   "by_newspaper": {
-    "朝日新聞": 2,
+    "朝日新聞": 3,
     "中日新聞": 3
   },
   "customers": [
@@ -64,6 +64,17 @@
       "age_group": "60代",
       "newspaper": "中日新聞",
       "registered_at": "7/16/2026 14:29:53",
+      "precision": "chome"
+    },
+    {
+      "id": "bf0fcbe2f40c",
+      "lat": 35.202925,
+      "lng": 136.995626,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "70代以上",
+      "newspaper": "朝日新聞",
+      "registered_at": "7/16/2026 15:07:22",
       "precision": "chome"
     }
   ]
