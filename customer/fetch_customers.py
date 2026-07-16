@@ -21,7 +21,7 @@ import logging
 import re
 from typing import Any
 
-from .sheets_client import open_sheet
+from .sheets_client import call_with_retry, open_sheet
 
 logger = logging.getLogger(__name__)
 
@@ -73,9 +73,11 @@ def fetch_customers(
         sa_json_path: サービスアカウントJSONのパス（None なら環境変数）。
     """
     ss = open_sheet(spreadsheet_id, sa_json_path=sa_json_path)
-    ws = ss.worksheet(worksheet_name) if worksheet_name else ss.sheet1
+    # worksheet 取得・値取得も Google API を叩くため一時エラー(503等)に備えて再試行
+    ws = (call_with_retry(ss.worksheet, worksheet_name) if worksheet_name
+          else call_with_retry(lambda: ss.sheet1))
 
-    rows = ws.get_all_values()
+    rows = call_with_retry(ws.get_all_values)
     if not rows:
         logger.warning("シートが空です")
         return []
