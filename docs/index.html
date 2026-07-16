@@ -11,8 +11,6 @@
   integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
   crossorigin=""
 />
-<!-- マーカークラスタリング（近接ピンをまとめて件数表示） -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
 <style>
   :root {
     /* 買取大吉ブランドカラー（公式ロゴ・サイト実測）＋ UIアクセント */
@@ -177,12 +175,14 @@
   integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
   crossorigin=""
 ></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
 <script>
 // ===== 設定 =====
 const STORE = { name: "買取大吉 守山大森店", lat: 35.2017705, lng: 136.9961965 };
 const INIT_CENTER = [STORE.lat, STORE.lng];
 const INIT_ZOOM = 14;
+// このズーム以上に拡大すると、丁目のまとまりを個別ピンに展開する。
+// これ未満（＝ある程度ズームアウト）では丁目単位でまとめて件数表示。
+const CHOME_SPLIT_ZOOM = 16;
 
 // 新聞社ごとの色（地図の道路色と被らない配色）。事前定義に無い新聞社は
 // PALETTE から順に割り当てる（動的カテゴリ対応）。
@@ -243,9 +243,13 @@ L.marker([STORE.lat, STORE.lng], { icon: storeIcon, zIndexOffset: 1000 })
   .bindTooltip("守山大森店", { permanent: true, direction: "bottom", offset: [0, 15], className: "store-label" })
   .bindPopup(`<b>${STORE.name}</b><br>（店舗）`);
 
+// ズーム変更で「丁目まとめ ⇔ 個別ピン」を切り替える
+map.on("zoomend", () => { if (customerLayer) renderPins(); });
+
 // ===== 動的カテゴリ＋複合フィルタ =====
-let customerLayer = null;   // 表示中のピンをまとめる layerGroup
-let markersMeta = [];       // [{marker, np, gender, age}]
+let customerLayer = null;   // 表示中のピン/バッジを載せる layerGroup
+let markersMeta = [];       // [{marker, np, gender, age, group, lat, lng}]
+let visibleMetas = [];      // フィルタを通過した meta（描画対象）
 let colorOf = {};           // newspaper -> color
 let countOf = {};           // newspaper -> 表示中の件数
 let grandTotal = 0;         // 表示中の合計件数
@@ -441,24 +445,68 @@ function refreshLegend() {
   if (legendCtl && legendCtl.getContainer()) legendCtl.getContainer().innerHTML = legendHtml();
 }
 
-// 現在のフィルタ（新聞社×性別×年代のAND）で表示ピンと件数を更新
+// 丁目まとめバッジのアイコン（件数入り・丸）
+function badgeIcon(count) {
+  let size = 32, fs = 13;
+  if (count >= 50) { size = 46; fs = 15; }
+  else if (count >= 10) { size = 38; fs = 14; }
+  return L.divIcon({
+    className: "cluster-icon",
+    html: `<div class="cluster-badge" style="width:${size}px;height:${size}px;font-size:${fs}px">${count}</div>`,
+    iconSize: [size, size],
+  });
+}
+
+// 現在のフィルタ（新聞社×性別×年代のAND）で表示対象と件数を更新
 function applyFilters() {
-  if (!customerLayer) return;
-  customerLayer.clearLayers();
   countOf = {};
   npValues.forEach((np) => { countOf[np] = 0; });
   grandTotal = 0;
-  markersMeta.forEach((m) => {
-    const visible =
-      activeNp.has(m.np) && activeGender.has(m.gender) && activeAge.has(m.age);
-    if (visible) {
-      customerLayer.addLayer(m.marker);
-      countOf[m.np] = (countOf[m.np] || 0) + 1;
-      grandTotal++;
-    }
+  visibleMetas = markersMeta.filter((m) =>
+    activeNp.has(m.np) && activeGender.has(m.gender) && activeAge.has(m.age)
+  );
+  visibleMetas.forEach((m) => {
+    countOf[m.np] = (countOf[m.np] || 0) + 1;
+    grandTotal++;
   });
   refreshSummary();
   refreshLegend();
+  renderPins();
+}
+
+// 現在のズームに応じて描画する:
+//   拡大時（CHOME_SPLIT_ZOOM 以上）＝ 個別ピン
+//   縮小時（それ未満）＝ 丁目(loc_group)ごとにまとめ、2件以上は件数バッジ、1件は個別ピン
+function renderPins() {
+  if (!customerLayer) return;
+  customerLayer.clearLayers();
+
+  if (map.getZoom() >= CHOME_SPLIT_ZOOM) {
+    visibleMetas.forEach((m) => customerLayer.addLayer(m.marker));
+    return;
+  }
+
+  // 丁目単位でグループ化
+  const groups = new Map();
+  visibleMetas.forEach((m) => {
+    const key = m.group || ("id:" + (m.marker._cust && m.marker._cust.id));
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(m);
+  });
+
+  groups.forEach((members) => {
+    if (members.length === 1) {
+      customerLayer.addLayer(members[0].marker);
+      return;
+    }
+    // 2件以上 → 重心にまとめバッジ。クリックで拡大して展開
+    const lat = members.reduce((s, m) => s + m.lat, 0) / members.length;
+    const lng = members.reduce((s, m) => s + m.lng, 0) / members.length;
+    const badge = L.marker([lat, lng], { icon: badgeIcon(members.length) });
+    badge.on("click", () => map.setView([lat, lng], CHOME_SPLIT_ZOOM, { animate: true }));
+    badge.bindTooltip(members.length + "件（同じ丁目）", { direction: "top", offset: [0, -8] });
+    customerLayer.addLayer(badge);
+  });
 }
 
 // 絞り込みチェックボックス群のHTMLを作る
@@ -574,34 +622,6 @@ function clearRender() {
   if (emptyMsgEl) { emptyMsgEl.remove(); emptyMsgEl = null; }
 }
 
-// クラスタ（まとめバッジ）のアイコン。件数に応じて大きさを変える。
-function clusterIcon(cluster) {
-  const n = cluster.getChildCount();
-  let size = 32, fs = 13;
-  if (n >= 50) { size = 46; fs = 15; }
-  else if (n >= 10) { size = 38; fs = 14; }
-  return L.divIcon({
-    className: "cluster-icon",
-    html: `<div class="cluster-badge" style="width:${size}px;height:${size}px;font-size:${fs}px">${n}</div>`,
-    iconSize: [size, size],
-  });
-}
-
-// 来店客ピンを載せるレイヤー。markercluster があれば近接ピンをまとめる。
-// ズームアウト（ワイド）時は件数バッジ、拡大すると個別ピンに展開。
-function makeCustomerLayer() {
-  if (L.markerClusterGroup) {
-    return L.markerClusterGroup({
-      maxClusterRadius: 45,          // この画面距離(px)以内をまとめる
-      disableClusteringAtZoom: 14,   // 初期ズーム14以上は個別表示、ズームアウトでまとまる
-      showCoverageOnHover: false,
-      spiderfyOnMaxZoom: true,
-      iconCreateFunction: clusterIcon,
-    }).addTo(map);
-  }
-  return L.layerGroup().addTo(map);   // 読み込み失敗時のフォールバック
-}
-
 function render(data) {
   clearRender();
   lastData = data;
@@ -631,7 +651,7 @@ function render(data) {
   activeGender = new Set(genderValues);
   activeAge = new Set(ageValues);
 
-  customerLayer = makeCustomerLayer();
+  customerLayer = L.layerGroup().addTo(map);
   markersMeta = customers.map((c) => {
     const np = c.newspaper || "未回答";
     const color = colorOf[np] || FALLBACK_COLOR;
@@ -644,11 +664,17 @@ function render(data) {
     });
     const marker = L.marker([c.lat, c.lng], { icon }).bindPopup(popupHtml(c));
     marker._cust = c;            // 削除時に参照する
-    return { marker, np, gender: c.gender || "未回答", age: c.age_group || "未回答" };
+    return {
+      marker, np,
+      gender: c.gender || "未回答",
+      age: c.age_group || "未回答",
+      group: c.loc_group || "",   // 丁目単位のまとめ用（無ければ個別扱い）
+      lat: c.lat, lng: c.lng,
+    };
   });
 
   buildControls();
-  applyFilters();   // 表示ピン＋件数を反映
+  applyFilters();   // 表示対象＋件数＋描画を反映
 }
 
 // 現在のJSONに無い削除IDはもう不要（サーバ側で消えた）→ ローカル記録から除去

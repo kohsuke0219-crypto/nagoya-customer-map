@@ -71,6 +71,16 @@ def _record_id(rec: dict[str, Any]) -> str:
     return hashlib.sha256(_record_key(rec).encode("utf-8")).hexdigest()[:12]
 
 
+def _loc_group(rec: dict[str, Any]) -> str:
+    """同じ「郵便番号＋丁目」をまとめるための不可逆なグループID。
+
+    地図側で丁目単位にピンをまとめる（クラスタ）ために使う。生の郵便番号・
+    丁目は公開しないが、このハッシュが一致する＝同じ丁目、と判定できる。
+    """
+    key = f"{rec.get('postal_code', '')}|{rec.get('chome', '')}"
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:10]
+
+
 def apply_privacy_offset(lat: float, lng: float, seed: int) -> tuple[float, float]:
     """座標に半径 OFFSET_RADIUS_M 以内のランダムオフセットを適用（決定論的）。
 
@@ -115,6 +125,7 @@ def build(
         out_records.append(
             {
                 "id": _record_id(rec),  # 削除照合用の不可逆ID（生の住所は含まない）
+                "loc_group": _loc_group(rec),  # 丁目単位でまとめる用の不可逆ID
                 "lat": lat,
                 "lng": lng,
                 "area": f"{res.prefecture}{res.city}",  # 例: 愛知県名古屋市守山区
