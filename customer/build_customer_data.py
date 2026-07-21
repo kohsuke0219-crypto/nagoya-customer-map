@@ -28,16 +28,20 @@ import logging
 import math
 import os
 import random
+import re
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
 from .fetch_customers import fetch_customers
+from .geocoder import GeocodeResult, Geocoder
 from .zip_to_coord import ZipToCoord
 
 logger = logging.getLogger(__name__)
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_OUTPUT = os.path.normpath(os.path.join(_HERE, "..", "docs", "data", "customers.json"))
+# 住所ジオコーディングのディスクキャッシュ（gitignore・API 節約用）
+GEOCACHE_PATH = os.path.join(_HERE, "geocache.json")
 
 # プライバシー保護オフセットの最大半径（メートル）
 OFFSET_RADIUS_M = 100.0
@@ -100,6 +104,91 @@ def apply_privacy_offset(lat: float, lng: float, seed: int) -> tuple[float, floa
     return round(lat + dlat, 6), round(lng + dlng, 6)
 
 
+# 「都道府県＋市区町村」だけを取り出す（丁目・番地は捨てる＝表示用・匿名化）
+_PREF_RE = r"(北海道|東京都|京都府|大阪府|.{2,3}県)"
+_CITY_RE = r"(.+?市.+?区|.+?[市区町村])"
+_PREF_CITY_RE = re.compile("^" + _PREF_RE + r"?\s*" + _CITY_RE)
+
+
+def _pref_city(text: str) -> str:
+    """住所文字列から都道府県＋市区町村までを抽出（番地・丁目は含めない）。"""
+    if not text:
+        return ""
+    # 「日本、〒123-4567 」などの接頭辞を除去
+    t = re.sub(r"^日本[、,]?\s*", "", text.strip())
+    t = re.sub(r"〒?\s*\d{3}-?\d{4}\s*", "", t)
+    m = _PREF_CITY_RE.match(t)
+    if m:
+        return (m.group(1) or "") + (m.group(2) or "")
+    return ""
+
+
+def _addr_group(address: str) -> str:
+    """住所入力用のまとめグループID（同じ住所＝同じ丁目相当）。"""
+    key = "addr|" + re.sub(r"\s+", "", str(address or ""))
+    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:10]
+
+
+def _load_geocache() -> dict[str, GeocodeResult]:
+    """住所→座標のディスクキャッシュを読み込む。"""
+    if not os.path.exists(GEOCACHE_PATH):
+        return {}
+    try:
+        with open(GEOCACHE_PATH, encoding="utf-8") as f:
+            raw = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    cache: dict[str, GeocodeResult] = {}
+    for addr, v in raw.items():
+        cache[addr] = GeocodeResult(
+            latitude=v.get("lat"), longitude=v.get("lng"),
+            formatted_address=v.get("formatted", ""), status=v.get("status", "OK"),
+        )
+    return cache
+
+
+def _save_geocache(cache: dict[str, GeocodeResult]) -> None:
+    raw = {
+        addr: {"lat": r.latitude, "lng": r.longitude,
+               "formatted": r.formatted_address, "status": r.status}
+        for addr, r in cache.items() if r.latitude is not None
+    }
+    try:
+        with open(GEOCACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump(raw, f, ensure_ascii=False, indent=2)
+    except OSError:
+        logger.warning("geocache の保存に失敗しました")
+
+
+def _resolve_location(
+    rec: dict[str, Any], converter: ZipToCoord, geocoder: Geocoder
+) -> tuple[float, float, str, str, str] | None:
+    """1レコードを (lat, lng, area, loc_group, precision) に変換。
+
+    郵便番号(7桁)があればオフライン変換を優先。無ければ住所を
+    Google ジオコーディングする。どちらも失敗なら None。
+    """
+    postal = rec.get("postal_code", "")
+    if len(postal) == 7:
+        res = converter.resolve(postal, rec.get("chome"))
+        if res.found:
+            return (res.latitude, res.longitude,
+                    f"{res.prefecture}{res.city}", _loc_group(rec), res.precision)
+
+    address = (rec.get("address") or "").strip()
+    if address:
+        if not geocoder.available:
+            logger.warning("住所ジオコーディング不可（GOOGLE_MAPS_API_KEY 未設定）")
+            return None
+        geo = geocoder.geocode(address)
+        if geo.latitude is not None:
+            area = _pref_city(geo.formatted_address) or _pref_city(address)
+            return (geo.latitude, geo.longitude, area, _addr_group(address), "address")
+        logger.info("住所を座標化できず: %r (status=%s)", address, geo.status)
+
+    return None
+
+
 def build(
     spreadsheet_id: str,
     output_path: str = DEFAULT_OUTPUT,
@@ -108,34 +197,45 @@ def build(
     """来店客データを構築して JSON に書き出す。集計サマリを返す。"""
     customers = fetch_customers(spreadsheet_id, sa_json_path=sa_json_path)
     converter = ZipToCoord()
+    # 住所入力のフォールバック用ジオコーダ（キャッシュでAPI節約）
+    geocache = _load_geocache()
+    geocoder = Geocoder(cache=geocache)
 
     out_records: list[dict[str, Any]] = []
     skipped = 0
     for rec in customers:
-        res = converter.resolve(rec["postal_code"], rec.get("chome"))
-        if not res.found:
+        loc = _resolve_location(rec, converter, geocoder)
+        if loc is None:
             skipped += 1
-            logger.info("座標化できずスキップ: 郵便番号=%s", rec["postal_code"])
+            logger.info(
+                "座標化できずスキップ: 郵便番号=%r 住所=%r",
+                rec.get("postal_code"), rec.get("address"),
+            )
             continue
+        base_lat, base_lng, area, loc_group, precision = loc
 
         seed = _stable_seed(rec)
-        lat, lng = apply_privacy_offset(res.latitude, res.longitude, seed)
+        lat, lng = apply_privacy_offset(base_lat, base_lng, seed)
 
         # ★出力には市区町村レベルの表示テキストと丸め座標のみ。詳細住所は入れない。
         out_records.append(
             {
                 "id": _record_id(rec),  # 削除照合用の不可逆ID（生の住所は含まない）
-                "loc_group": _loc_group(rec),  # 丁目単位でまとめる用の不可逆ID
+                "loc_group": loc_group,  # 丁目単位でまとめる用の不可逆ID
                 "lat": lat,
                 "lng": lng,
-                "area": f"{res.prefecture}{res.city}",  # 例: 愛知県名古屋市守山区
+                "area": area,  # 例: 愛知県名古屋市守山区（市区町村まで）
                 "gender": rec.get("gender", ""),
                 "age_group": rec.get("age_group", ""),
                 "newspaper": rec.get("newspaper", ""),
                 "registered_at": rec.get("registered_at", ""),
-                "precision": res.precision,  # chome/town/city（内部指標・住所は含まない）
+                "precision": precision,  # chome/town/city/address（内部指標）
             }
         )
+
+    if geocoder.api_call_count:
+        _save_geocache(geocoder.cache)
+        logger.info("住所ジオコーディング: API %d 回", geocoder.api_call_count)
 
     # 新聞社別集計（動的カテゴリ）
     by_newspaper: dict[str, int] = {}
