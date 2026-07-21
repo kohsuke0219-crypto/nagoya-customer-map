@@ -184,14 +184,21 @@ const INIT_ZOOM = 14;
 // これ未満（＝ある程度ズームアウト）では丁目単位でまとめて件数表示。
 const CHOME_SPLIT_ZOOM = 16;
 
-// 新聞社ごとの色（地図の道路色と被らない配色）。事前定義に無い新聞社は
-// PALETTE から順に割り当てる（動的カテゴリ対応）。
+// 来店のきっかけ（新聞社を含む）ごとの色。事前定義に無い値は PALETTE から
+// 順に自動割り当て（動的カテゴリ対応。SNS 等を後から増やしてもコード修正不要）。
 const NEWSPAPER_COLORS = {
   "中日新聞": "#7c3aed",       // 濃紫
   "朝日新聞": "#0d9488",       // ティール
   "読売新聞": "#ea580c",       // オレンジ
   "毎日新聞": "#db2777",       // ピンク
   "日本経済新聞": "#65a30d",   // 緑
+  // 新聞以外の「来店のきっかけ」よくある選択肢（あれば固定色）
+  "SNS": "#0ea5e9",            // スカイブルー
+  "通りすがり": "#78716c",     // ストーン
+  "紹介": "#d946ef",           // フクシア
+  "ご紹介": "#d946ef",
+  "チラシ": "#eab308",         // イエロー
+  "ホームページ": "#14b8a6",   // ティール系
   "覚えていない": "#64748b",   // グレー
   "その他": "#f59e0b",         // アンバー
 };
@@ -434,7 +441,7 @@ function legendHtml() {
       `<span class="lg-name">${esc(np)}</span>` +
       `<span class="lg-cnt">${countOf[np] || 0}件</span></div>`;
   });
-  return `<h3>凡例</h3>${rows}<div class="note">円＝来店客（新聞社別）</div>`;
+  return `<h3>凡例</h3>${rows}<div class="note">円＝来店客（きっかけ別）</div>`;
 }
 
 // 集計・凡例パネルを最新の件数で再描画（フィルタ状態は崩さない）
@@ -532,7 +539,7 @@ function buildControls() {
       div.id = "filterPanel";
       div.innerHTML =
         "<h3>絞り込み</h3>" +
-        filterGroupHtml("新聞社", npValues, "np", true) +
+        filterGroupHtml("来店のきっかけ", npValues, "np", true) +
         filterGroupHtml("性別", genderValues, "gender", false) +
         filterGroupHtml("年代", ageValues, "age", false);
       L.DomEvent.disableClickPropagation(div);

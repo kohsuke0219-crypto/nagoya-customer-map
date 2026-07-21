@@ -70,7 +70,7 @@ const FIELD_KEYWORDS = [
   ['chome', ['丁目', 'chome']],
   ['gender', ['性別', 'gender', '男女']],
   ['age', ['年代', '年齢', 'age']],
-  ['newspaper', ['新聞', 'newspaper', 'paper', '紙']],
+  ['newspaper', ['新聞', 'newspaper', 'paper', '紙', 'きっかけ', '来店', '経路', '媒体', '知']],
 ];
 
 function json_(obj) {

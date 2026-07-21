@@ -36,7 +36,8 @@ FIELD_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
     ("chome", ("丁目", "chome")),
     ("gender", ("性別", "gender", "男女")),
     ("age_group", ("年代", "年齢", "age")),
-    ("newspaper", ("新聞", "newspaper", "paper", "紙")),
+    # 「新聞社」でも「来店のきっかけ」でも認識できるようにキーワードを広める
+    ("newspaper", ("新聞", "newspaper", "paper", "紙", "きっかけ", "来店", "経路", "媒体", "知")),
     ("address", ("住所", "address", "所在", "町名", "番地")),
 ]
 
