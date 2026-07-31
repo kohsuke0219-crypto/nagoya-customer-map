@@ -51,17 +51,27 @@ METERS_PER_DEG_LAT = 111_000.0
 JST = timezone(timedelta(hours=9))
 
 
-# 照合に使うフィールド（この順・この区切りで Apps Script 側と厳密に一致させる）
-_ID_FIELDS = ("postal_code", "chome", "gender", "age_group", "newspaper", "registered_at")
+# オフセット（ピン位置）再現用のシードフィールド。
+# ※変えると全ピンの丸め位置が動くので固定する（新聞社/きっかけを含む従来のまま）。
+_SEED_FIELDS = ("postal_code", "chome", "gender", "age_group", "newspaper", "registered_at")
+
+# 削除照合IDのフィールド。★「来店のきっかけ」(newspaper) を含めない＝
+#   フォームの質問名や選択肢を変えても削除が壊れないようにするため。
+#   Apps Script(delete_customer.gs) の recordId_() と厳密に一致させること。
+_ID_FIELDS = ("postal_code", "chome", "gender", "age_group", "registered_at")
 
 
-def _record_key(rec: dict[str, Any]) -> str:
+def _seed_key(rec: dict[str, Any]) -> str:
+    return "|".join(str(rec.get(k, "")) for k in _SEED_FIELDS)
+
+
+def _id_key(rec: dict[str, Any]) -> str:
     return "|".join(str(rec.get(k, "")) for k in _ID_FIELDS)
 
 
 def _stable_seed(rec: dict[str, Any]) -> int:
     """顧客レコードから安定したシード値を作る（同じ人は常に同じオフセット）。"""
-    digest = hashlib.sha256(_record_key(rec).encode("utf-8")).hexdigest()
+    digest = hashlib.sha256(_seed_key(rec).encode("utf-8")).hexdigest()
     return int(digest[:16], 16)
 
 
@@ -72,7 +82,7 @@ def _record_id(rec: dict[str, Any]) -> str:
     Apps Script 側で各行から同じ手順で再計算し、一致した行を削除する。
     ★Apps Script(delete_customer.gs)の recordId_() と同一アルゴリズムを保つこと。
     """
-    return hashlib.sha256(_record_key(rec).encode("utf-8")).hexdigest()[:12]
+    return hashlib.sha256(_id_key(rec).encode("utf-8")).hexdigest()[:12]
 
 
 def _loc_group(rec: dict[str, Any]) -> str:

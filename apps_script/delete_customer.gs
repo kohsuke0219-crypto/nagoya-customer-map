@@ -115,6 +115,8 @@ function cell_(row, idx) {
 }
 
 // 1行分 → 12桁ID。Python build_customer_data._record_id() と同一アルゴリズム。
+// ★「来店のきっかけ」(newspaper) は含めない。質問名や選択肢を変えても
+//   削除が壊れないようにするため（郵便番号・丁目・性別・年代・登録日時で照合）。
 function recordId_(row, m) {
   const postal = String(row[m.postal] == null ? '' : row[m.postal]).replace(/[^0-9]/g, '');
   const key = [
@@ -122,7 +124,6 @@ function recordId_(row, m) {
     cell_(row, m.chome),
     cell_(row, m.gender),
     cell_(row, m.age),
-    cell_(row, m.newspaper),
     cell_(row, m.registered_at),
   ].join('|');
   const bytes = Utilities.computeDigest(
