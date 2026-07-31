@@ -1,101 +1,16 @@
 {
-  "generated_at": "2026-07-31T11:22:23+09:00",
+  "generated_at": "2026-07-31T12:19:13+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 8,
+  "total": 2,
   "by_newspaper": {
-    "朝日新聞": 3,
-    "中日新聞": 4,
-    "ネット検索": 1
+    "ネット検索": 1,
+    "CM・テレビ": 1
   },
   "customers": [
-    {
-      "id": "4a461ad7dfd0",
-      "loc_group": "71d40c8ef2",
-      "lat": 35.211252,
-      "lng": 136.991814,
-      "area": "愛知県名古屋市守山区",
-      "gender": "女性",
-      "age_group": "60代",
-      "newspaper": "朝日新聞",
-      "registered_at": "7/13/2026 14:22:14",
-      "precision": "chome"
-    },
-    {
-      "id": "60787953c70f",
-      "loc_group": "d04237962b",
-      "lat": 35.21245,
-      "lng": 136.976385,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "60代",
-      "newspaper": "朝日新聞",
-      "registered_at": "7/13/2026 15:04:03",
-      "precision": "town"
-    },
-    {
-      "id": "90bb24e0f3e0",
-      "loc_group": "a4bb495fed",
-      "lat": 35.205553,
-      "lng": 137.004198,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "40代",
-      "newspaper": "中日新聞",
-      "registered_at": "7/13/2026 15:09:45",
-      "precision": "town"
-    },
-    {
-      "id": "59a168d392cf",
-      "loc_group": "cb83cf77e3",
-      "lat": 35.205609,
-      "lng": 137.002064,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "40代",
-      "newspaper": "中日新聞",
-      "registered_at": "7/13/2026 15:10:51",
-      "precision": "chome"
-    },
-    {
-      "id": "43596eea547a",
-      "loc_group": "4ce62b7ad0",
-      "lat": 35.202506,
-      "lng": 136.995513,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "60代",
-      "newspaper": "中日新聞",
-      "registered_at": "7/16/2026 14:29:53",
-      "precision": "chome"
-    },
-    {
-      "id": "771c3f3a5cb6",
-      "loc_group": "4ce62b7ad0",
-      "lat": 35.202925,
-      "lng": 136.995626,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "70代以上",
-      "newspaper": "朝日新聞",
-      "registered_at": "7/16/2026 15:07:22",
-      "precision": "chome"
-    },
-    {
-      "id": "af0f520391be",
-      "loc_group": "4ce62b7ad0",
-      "lat": 35.203379,
-      "lng": 136.994677,
-      "area": "愛知県名古屋市守山区",
-      "gender": "女性",
-      "age_group": "40代",
-      "newspaper": "中日新聞",
-      "registered_at": "7/16/2026 15:15:36",
-      "precision": "chome"
-    },
     {
       "id": "63c8550641e8",
       "loc_group": "36fd9bbfa2",
@@ -107,6 +22,18 @@
       "newspaper": "ネット検索",
       "registered_at": "7/31/2026 11:04:41",
       "precision": "address"
+    },
+    {
+      "id": "ab892753f854",
+      "loc_group": "6062fbd658",
+      "lat": 35.208564,
+      "lng": 136.992256,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "20代",
+      "newspaper": "CM・テレビ",
+      "registered_at": "7/31/2026 12:18:46",
+      "precision": "chome"
     }
   ]
 }
