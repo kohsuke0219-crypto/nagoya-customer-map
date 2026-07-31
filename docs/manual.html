@@ -4,165 +4,232 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="robots" content="noindex, nofollow" />
-<title>買取大吉 守山大森店 来店客マップ｜かんたんマニュアル</title>
+<title>買取大吉 守山大森店 来店客マップ｜使い方ガイド</title>
 <style>
   :root{
     --brand:#153C96; --brand-dark:#100169; --gold:#F2C230; --red:#dc2626;
-    --ink:#1f2937; --muted:#6b7280; --bg:#f4f6fb; --card:#fff;
+    --ink:#1f2937; --muted:#6b7280; --bg:#eef1f8; --card:#fff;
     --font:system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
   }
   *{box-sizing:border-box}
   html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.7}
-  header{background:var(--brand-dark);color:#fff;border-bottom:4px solid var(--gold);padding:18px 16px;text-align:center}
-  header h1{margin:0;font-size:20px}
-  header p{margin:4px 0 0;font-size:13px;opacity:.85}
-  main{max-width:820px;margin:0 auto;padding:16px 14px 60px}
+  header{background:var(--brand-dark);color:#fff;border-bottom:4px solid var(--gold);padding:20px 16px;text-align:center}
+  header h1{margin:0;font-size:21px}
+  header p{margin:5px 0 0;font-size:13px;opacity:.85}
+  main{max-width:760px;margin:0 auto;padding:16px 14px 60px}
+
   .links{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}
-  .link-card{flex:1 1 240px;background:var(--card);border-radius:12px;box-shadow:0 2px 10px rgba(15,23,42,.1);padding:12px 14px;text-decoration:none;color:inherit;border:1px solid rgba(15,23,42,.06)}
-  .link-card b{display:block;color:var(--brand);font-size:14px}
-  .link-card span{font-size:12px;color:var(--muted);word-break:break-all}
-  section{background:var(--card);border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.1);padding:18px 18px;margin:16px 0;border:1px solid rgba(15,23,42,.06)}
-  h2{font-size:17px;margin:0 0 4px;color:var(--brand-dark);display:flex;align-items:center;gap:8px}
-  .aud{font-size:12px;color:#fff;border-radius:20px;padding:2px 10px;font-weight:700}
-  .aud.staff{background:var(--brand)}
-  .aud.admin{background:var(--red)}
-  .sub{color:var(--muted);font-size:13px;margin:2px 0 14px}
-  ol,ul{padding-left:1.3em;margin:10px 0}
-  li{margin:8px 0}
-  .step{background:#f7f9fd;border-left:4px solid var(--brand);border-radius:8px;padding:10px 12px;margin:10px 0}
-  .step b{color:var(--brand-dark)}
-  code{background:#eef1f8;border-radius:5px;padding:1px 6px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all}
-  .tip{background:#fff8e1;border:1px solid #f5e2a8;border-radius:8px;padding:10px 12px;font-size:13px;margin:12px 0}
-  .warn{background:#fdecea;border:1px solid #f5c6c2;border-radius:8px;padding:10px 12px;font-size:13px;margin:12px 0}
-  .pin{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15);vertical-align:middle}
-  .faq dt{font-weight:700;margin-top:12px;color:var(--brand-dark)}
-  .faq dd{margin:2px 0 0}
-  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
-  .big{font-size:15px}
+  .link-card{flex:1 1 220px;background:var(--card);border-radius:12px;box-shadow:0 2px 10px rgba(15,23,42,.1);padding:14px;text-decoration:none;color:inherit;border:1px solid rgba(15,23,42,.06);display:flex;align-items:center;gap:10px}
+  .link-card .ico{font-size:26px}
+  .link-card b{display:block;color:var(--brand);font-size:15px}
+  .link-card span{font-size:11px;color:var(--muted);word-break:break-all}
+
+  /* 流れの図解 */
+  .flow{display:flex;align-items:stretch;gap:6px;margin:18px 0;flex-wrap:wrap;justify-content:center}
+  .flow .box{flex:1 1 150px;min-width:130px;background:var(--card);border-radius:12px;box-shadow:0 2px 10px rgba(15,23,42,.1);padding:14px 10px;text-align:center;border:1px solid rgba(15,23,42,.06)}
+  .flow .box .ico{font-size:30px;display:block}
+  .flow .box b{display:block;margin-top:4px;font-size:14px;color:var(--brand-dark)}
+  .flow .box small{color:var(--muted);font-size:11px}
+  .flow .arrow{display:flex;align-items:center;font-size:26px;color:var(--brand);font-weight:700}
+  @media(max-width:560px){.flow .arrow{transform:rotate(90deg)}}
+
+  h2{font-size:18px;margin:26px 0 10px;color:var(--brand-dark);display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--gold);padding-bottom:6px}
+
+  /* ステップカード */
+  .step{background:var(--card);border-radius:14px;box-shadow:0 2px 12px rgba(15,23,42,.1);padding:16px;margin:14px 0;border:1px solid rgba(15,23,42,.06);display:flex;gap:14px}
+  .step .num{flex:0 0 38px;height:38px;border-radius:50%;background:var(--brand);color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .step .body{flex:1 1 auto;min-width:0}
+  .step h3{margin:2px 0 6px;font-size:16px;color:var(--brand-dark)}
+  .step p{margin:6px 0}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .chip{background:#eef1f8;color:var(--brand-dark);border-radius:16px;padding:3px 11px;font-size:13px;font-weight:600}
+
+  /* ボタン見本（実物と同じ見た目） */
+  .demo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+  .btn-update{font-size:14px;font-weight:700;padding:9px 16px;background:var(--brand);color:#fff;border:none;border-radius:9px}
+  .btn-analyze{font-size:13px;font-weight:700;padding:8px 14px;background:#fff;color:var(--brand);border:1.5px solid var(--brand);border-radius:8px}
+  .btn-gear{font-size:12px;color:var(--brand);background:none;border:none;text-decoration:underline}
+  .btn-del{font-size:12px;font-weight:700;color:#fff;background:var(--red);border:none;border-radius:7px;padding:6px 11px}
+  .cap{font-size:12px;color:var(--muted)}
+
+  /* 地図の見本 */
+  .map-demo{position:relative;height:170px;background:#eceff5;border-radius:12px;border:1px solid rgba(15,23,42,.1);overflow:hidden;margin:8px 0}
+  .map-demo .road{position:absolute;background:#dfe3ec}
+  .m-store{position:absolute;width:30px;height:30px;border-radius:50%;background:var(--red);border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center}
+  .m-store svg{width:15px;height:15px}
+  .m-label{position:absolute;background:#fff;color:var(--red);font-weight:700;font-size:11px;border-radius:6px;padding:1px 7px;box-shadow:0 2px 5px rgba(0,0,0,.25)}
+  .m-dot{position:absolute;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center}
+  .m-dot::after{content:"";width:6px;height:6px;border-radius:50%;background:#fff}
+  .m-badge{position:absolute;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px}
+  .legend-mini{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0;font-size:13px}
+  .legend-mini span{display:flex;align-items:center;gap:6px}
+  .sw{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.15)}
+
+  /* ミニ棒グラフ */
+  .mini-chart{background:#f7f9fd;border-radius:10px;padding:12px;margin:8px 0}
+  .mini-chart .r{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px}
+  .mini-chart .r .l{flex:0 0 88px}
+  .mini-chart .r .t{flex:1;height:16px;background:#e6eaf3;border-radius:4px}
+  .mini-chart .r .t i{display:block;height:100%;border-radius:4px}
+  .mini-chart .r .v{font-weight:700;font-size:12px}
+
+  .tip{background:#fff8e1;border:1px solid #f5e2a8;border-radius:10px;padding:12px 14px;font-size:13.5px;margin:12px 0}
+  .tip b{color:#8a6d00}
+  ul.compact{margin:8px 0;padding-left:1.2em}
+  ul.compact li{margin:8px 0}
+
+  .faq dt{font-weight:700;margin-top:14px;color:var(--brand-dark)}
+  .faq dd{margin:3px 0 0;color:#374151}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:24px}
 </style>
 </head>
 <body>
 <header>
-  <h1>買取大吉 守山大森店 来店客マップ</h1>
-  <p>かんたん操作マニュアル（新聞折込チラシ・来店きっかけの効果分析）</p>
+  <h1>🗺️ 来店客マップ 使い方ガイド</h1>
+  <p>買取大吉 守山大森店｜スタッフ用</p>
 </header>
 <main>
 
   <div class="links">
     <a class="link-card" href="./index.html">
-      <b>🗺️ 来店客マップを開く</b>
-      <span>kohsuke0219-crypto.github.io/nagoya-customer-map/</span>
+      <span class="ico">🗺️</span>
+      <span><b>来店客マップを開く</b><span>このマップ本体</span></span>
     </a>
     <a class="link-card" href="https://forms.gle/8nAksXf4mzYFYfaG7" target="_blank" rel="noopener">
-      <b>📝 入力フォームを開く</b>
-      <span>forms.gle/8nAksXf4mzYFYfaG7</span>
+      <span class="ico">📝</span>
+      <span><b>入力フォームを開く</b><span>forms.gle/8nAksXf4mzYFYfaG7</span></span>
     </a>
   </div>
 
-  <p class="big">お客様の来店情報を <b>フォームで入力</b> すると、<b>地図</b> に「来店のきっかけ」別で色分け表示され、
-  どのチラシ・きっかけがどのエリアの来店につながっているかが一目で分かります。</p>
+  <!-- 全体の流れ -->
+  <div class="flow">
+    <div class="box"><span class="ico">📝</span><b>入力する</b><small>フォームで送信</small></div>
+    <div class="arrow">→</div>
+    <div class="box"><span class="ico">🔄</span><b>更新する</b><small>ボタンを押す</small></div>
+    <div class="arrow">→</div>
+    <div class="box"><span class="ico">🗺️</span><b>地図に出る</b><small>きっかけ別に色分け</small></div>
+  </div>
 
-  <!-- ===== スタッフ向け ===== -->
-  <section>
-    <h2>毎日の使い方 <span class="aud staff">スタッフ向け</span></h2>
-    <p class="sub">この4ステップだけ覚えればOKです。</p>
+  <!-- ===== 毎日の使い方 ===== -->
+  <h2>📌 毎日の使い方</h2>
 
-    <div class="step"><b>① お客様の情報を入力</b><br>
-      上の「📝 入力フォーム」を開き、次を入力して送信します。<br>
-      <b>郵便番号</b>（分からなければ<b>住所</b>）／<b>丁目</b>／<b>性別</b>／<b>年代</b>／<b>来店のきっかけ</b><br>
-      <span style="color:var(--muted);font-size:13px">※郵便番号か住所のどちらか一方でOK。個人名は入力しません。</span>
+  <div class="step">
+    <div class="num">1</div>
+    <div class="body">
+      <h3>お客様の情報を入力する</h3>
+      <p>「📝 入力フォーム」を開いて、次の項目を入力し送信します。</p>
+      <div class="chips">
+        <span class="chip">郵便番号 or 住所</span>
+        <span class="chip">丁目</span>
+        <span class="chip">性別</span>
+        <span class="chip">年代</span>
+        <span class="chip">来店のきっかけ</span>
+      </div>
+      <p class="cap">※ 郵便番号か住所の <b>どちらか一方</b> でOK。お名前は入力しません。</p>
     </div>
+  </div>
 
-    <div class="step"><b>② 地図で見る</b><br>
-      「🗺️ 来店客マップ」を開きます。<br>
-      ・<span class="pin" style="background:var(--red)"></span> 赤い家アイコン＝お店（守山大森店）<br>
-      ・色のついた丸＝来店客（来店のきっかけ別に色分け）
+  <div class="step">
+    <div class="num">2</div>
+    <div class="body">
+      <h3>地図で見る</h3>
+      <div class="map-demo">
+        <div class="road" style="left:0;top:70px;width:100%;height:10px"></div>
+        <div class="road" style="left:130px;top:0;width:9px;height:100%"></div>
+        <div class="m-store" style="left:120px;top:52px">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        </div>
+        <div class="m-label" style="left:104px;top:86px">守山大森店</div>
+        <div class="m-dot" style="left:60px;top:30px;background:#7c3aed"></div>
+        <div class="m-dot" style="left:210px;top:40px;background:#0ea5e9"></div>
+        <div class="m-dot" style="left:240px;top:110px;background:#0d9488"></div>
+        <div class="m-badge" style="left:56px;top:104px">3</div>
+      </div>
+      <div class="legend-mini">
+        <span><i class="m-store" style="position:static;width:18px;height:18px;border-width:2px"><svg viewBox="0 0 24 24" fill="#fff" style="width:9px;height:9px"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></i> お店</span>
+        <span><i class="sw" style="background:#7c3aed"></i> 中日新聞</span>
+        <span><i class="sw" style="background:#0ea5e9"></i> SNS</span>
+        <span><i class="m-badge" style="position:static;width:22px;height:22px;font-size:12px">3</i> 同じ丁目に3人</span>
+      </div>
+      <p class="cap">赤い家＝お店。色の丸＝来店客（きっかけ別）。数字＝同じ丁目にまとまった人数。</p>
     </div>
+  </div>
 
-    <div class="step"><b>③ 最新にする（🔄 更新ボタン）</b><br>
-      入力した内容を地図に反映したいときは、左上の <b>「🔄 更新」</b> を押します。<br>
-      1〜2分で新しいピンが表示されます（設定により最大10分の場合あり）。
+  <div class="step">
+    <div class="num">3</div>
+    <div class="body">
+      <h3>最新にする</h3>
+      <p>入力した内容を地図に反映するには、左上のこのボタンを押します。</p>
+      <div class="demo"><button class="btn-update" type="button">🔄 更新</button>
+        <span class="cap">→ 1〜2分で新しいピンが出ます</span></div>
     </div>
+  </div>
 
-    <div class="step"><b>④ 分析する（📊 分析・CSV）</b><br>
-      左上の <b>「📊 分析・CSV」</b> を押すと、来店のきっかけ・年代・性別・エリア・日別のグラフが見られます。<br>
-      「⬇ CSVダウンロード」でExcel用データも保存できます。
+  <div class="step">
+    <div class="num">4</div>
+    <div class="body">
+      <h3>グラフで分析・CSVを出す</h3>
+      <div class="demo"><button class="btn-analyze" type="button">📊 分析・CSV</button>
+        <span class="cap">→ このボタンを押すと…</span></div>
+      <div class="mini-chart">
+        <div class="r"><span class="l">中日新聞</span><span class="t"><i style="width:90%;background:#7c3aed"></i></span><span class="v">3件</span></div>
+        <div class="r"><span class="l">SNS</span><span class="t"><i style="width:60%;background:#0ea5e9"></i></span><span class="v">2件</span></div>
+        <div class="r"><span class="l">ネット検索</span><span class="t"><i style="width:30%;background:#ea580c"></i></span><span class="v">1件</span></div>
+      </div>
+      <p class="cap">来店のきっかけ・年代・性別・エリア・日別のグラフが見られます。「⬇ CSVダウンロード」でExcel用データも保存できます。</p>
     </div>
+  </div>
 
-    <p style="margin-top:16px"><b>便利な操作</b></p>
-    <ul>
-      <li><b>絞り込み（右上）</b>：来店のきっかけ・性別・年代のチェックを外すと、その条件だけ表示できます。</li>
-      <li><b>まとめ表示</b>：地図を引く（ズームアウト）と、同じ丁目のお客様が <b>件数の数字</b> でまとまります。数字をクリック（または拡大）すると1件ずつに分かれます。</li>
-      <li><b>間違えたデータを消す</b>：ピンをクリック →「🗑 このデータを削除」。（初回のみ下の「初期設定」が必要です）</li>
-    </ul>
-  </section>
+  <!-- ===== 便利な操作 ===== -->
+  <h2>✨ 便利な操作</h2>
+  <ul class="compact">
+    <li><b>絞り込み（右上）</b>：きっかけ・性別・年代のチェックを外すと、その条件だけ表示できます。</li>
+    <li><b>まとめ表示</b>：地図を <b>引く（ズームアウト）</b> と、同じ丁目のお客様が <b>数字</b> でまとまります。数字を押す（拡大する）と1人ずつに分かれます。</li>
+    <li><b>間違えたデータを消す</b>：地図のピンを押す → <button class="btn-del" type="button">🗑 このデータを削除</button>（初回だけ下の設定が必要）</li>
+  </ul>
 
-  <!-- ===== 管理者向け ===== -->
-  <section>
-    <h2>初期設定（削除・今すぐ反映） <span class="aud admin">管理者向け・1回だけ</span></h2>
-    <p class="sub">「削除」や「今すぐ反映」を使うときだけ必要です。ふだんの入力・閲覧・分析には不要です。</p>
+  <!-- ===== はじめだけの設定 ===== -->
+  <h2>⚙ はじめだけの設定（削除を使う人）</h2>
+  <p>削除ボタンを使う端末では、最初に1回だけ「合言葉」の登録が必要です（<b>管理者からURLと合言葉をもらってください</b>）。</p>
 
-    <div class="tip">
-      <b>❓「Apps Script WebアプリのURLを貼り付けてください」と出たら？</b><br>
-      それは <b>Googleスプレッドシートの拡張機能（Apps Script）で作ったウェブアプリのURL</b> のことです。
-      <code>https://script.google.com/macros/s/……/exec</code> で終わるURLで、下の②で取得します。
+  <div class="step">
+    <div class="num">1</div>
+    <div class="body">
+      <h3>「削除の設定」を開く</h3>
+      <p>地図の左上、更新ボタンの下にあるこのリンクを押します。</p>
+      <div class="demo"><button class="btn-gear" type="button">⚙ 削除の設定</button></div>
     </div>
-
-    <p><b>① Apps Script を用意する</b></p>
-    <ol>
-      <li>回答用スプレッドシート「買取大吉 来店客記録（名古屋）」を開く</li>
-      <li>メニュー <b>拡張機能 → Apps Script</b> を開く</li>
-      <li>管理者から渡されたコード（<code>delete_customer.gs</code>）を貼り付け、<code>TOKEN</code> に合言葉を設定して保存</li>
-    </ol>
-
-    <p><b>② ウェブアプリのURL（.../exec）を取得する</b></p>
-    <ol>
-      <li>Apps Script 右上の <b>デプロイ → 新しいデプロイ → ウェブアプリ</b>
-        （実行するユーザー＝自分／アクセスできるユーザー＝全員）</li>
-      <li>表示された <code>.../exec</code> のURLをコピー（これが上の質問で貼り付けるURL）</li>
-      <li>すでに作成済みなら <b>デプロイ → デプロイを管理 → ウェブアプリ</b> からURLをコピーできます</li>
-    </ol>
-
-    <p><b>③ 地図に登録する（端末ごとに1回）</b></p>
-    <ol>
-      <li>地図の左上 <b>「⚙ 削除の設定」</b> をクリック</li>
-      <li>コピーした <code>.../exec</code> のURLを貼り付け</li>
-      <li>合言葉（TOKEN）を入力 → 「保存しました」と出れば完了</li>
-    </ol>
-
-    <div class="warn">
-      <b>⚠️ コードを更新したら「新バージョン」でデプロイ</b><br>
-      Apps Scriptは「保存」だけでは反映されません。必ず
-      <b>デプロイを管理 → 編集(鉛筆) → バージョン＝「新バージョン」→ デプロイ</b> をしてください（URLは変わりません）。
-      削除が急に動かなくなった時は、たいていこれが原因です。
+  </div>
+  <div class="step">
+    <div class="num">2</div>
+    <div class="body">
+      <h3>もらったURLと合言葉を貼る</h3>
+      <p>順番に2回、入力欄が出ます。管理者からもらった内容をそのまま貼り付けます。</p>
+      <div class="chips">
+        <span class="chip">① URL（https://…/exec）</span>
+        <span class="chip">② 合言葉</span>
+      </div>
+      <p class="cap">「保存しました」と出れば完了。この端末では次回から不要です。</p>
     </div>
-
-    <p><b>④「今すぐ反映」を使う場合（任意）</b></p>
-    <p class="sub" style="margin-top:0">更新ボタンで即座（1〜2分）に反映させたい場合のみ。設定しなくても自動更新はされます。</p>
-    <ul>
-      <li>GitHubの「fine-grained トークン」（対象リポジトリ＝<code>nagoya-customer-map</code>／権限＝Actions: Read and write）を作成</li>
-      <li>Apps Script の <b>プロジェクトの設定 → スクリプト プロパティ</b> に <code>GITHUB_TOKEN</code> として登録</li>
-    </ul>
-  </section>
+  </div>
+  <div class="tip"><b>ヒント：</b>URLと合言葉が分からないときは、管理者に「削除用のURLと合言葉ちょうだい」と聞けばOKです。</div>
 
   <!-- ===== FAQ ===== -->
-  <section>
-    <h2>困ったときは（FAQ）</h2>
-    <dl class="faq">
-      <dt>Q. 更新ボタンを押しても新しいお客様が出てこない</dt>
-      <dd>表示されるメッセージを確認してください。「未設定です」→ ⚙削除の設定を登録。「反映エラー…」→ そのメッセージ内容を管理者へ。何も設定していない場合は、最大10分ほどで自動反映されます。</dd>
-      <dt>Q. 削除できない／「削除できませんでした」と出る</dt>
-      <dd>Apps Scriptを「新バージョン」でデプロイし直してください（上の⚠️参照）。</dd>
-      <dt>Q. 郵便番号が分からないお客様</dt>
-      <dd>フォームの「住所」欄に住所を入力すればOK。地図にちゃんと反映されます。</dd>
-      <dt>Q. 中日新聞など、来ていないきっかけが0件で残っている</dt>
-      <dd>0件のものは自動で消えます。表示が古い場合は「🔄 更新」または画面を再読み込みしてください。</dd>
-      <dt>Q. 個人情報は大丈夫？</dt>
-      <dd>個人名は集めません。地図の位置は約100mずらして表示し、詳細な番地は保存・表示しません（市区町村まで）。</dd>
-    </dl>
-  </section>
+  <h2>❓ 困ったときは</h2>
+  <dl class="faq">
+    <dt>更新ボタンを押しても新しいお客様が出ない</dt>
+    <dd>1〜2分待ってからもう一度押してください。それでも出ないときは、ボタン下の文字（メッセージ）を管理者に伝えてください。設定していなくても、最大10分ほどで自動的に反映されます。</dd>
+    <dt>郵便番号が分からないお客様がいる</dt>
+    <dd>フォームの「住所」欄に住所を書けばOK。ちゃんと地図に出ます。</dd>
+    <dt>削除ボタンでうまく消せない</dt>
+    <dd>「はじめだけの設定」が済んでいるか確認してください。それでもダメなときは管理者に連絡を。</dd>
+    <dt>来ていないきっかけが残っている</dt>
+    <dd>0件のものは自動で消えます。表示が古いときは「🔄 更新」か、画面を再読み込みしてください。</dd>
+    <dt>個人情報は大丈夫？</dt>
+    <dd>お名前は集めません。地図の位置は約100mずらして表示し、番地までは保存・表示しません（市区町村まで）。</dd>
+  </dl>
 
-  <footer>買取大吉 守山大森店 来店客マップ ／ 社内用マニュアル</footer>
+  <footer>買取大吉 守山大森店 来店客マップ ／ スタッフ用ガイド</footer>
 </main>
 </body>
 </html>
