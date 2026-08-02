@@ -1,14 +1,15 @@
 {
-  "generated_at": "2026-07-31T12:19:13+09:00",
+  "generated_at": "2026-08-02T11:49:08+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 2,
+  "total": 3,
   "by_newspaper": {
     "ネット検索": 1,
-    "CM・テレビ": 1
+    "CM・テレビ": 1,
+    "新聞折込チラシ": 1
   },
   "customers": [
     {
@@ -34,6 +35,18 @@
       "newspaper": "CM・テレビ",
       "registered_at": "7/31/2026 12:18:46",
       "precision": "chome"
+    },
+    {
+      "id": "e8a0e96aa7a8",
+      "loc_group": "c610b45a0a",
+      "lat": 35.205414,
+      "lng": 136.985192,
+      "area": "愛知県名古屋市守山区",
+      "gender": "女性",
+      "age_group": "70代以上",
+      "newspaper": "新聞折込チラシ",
+      "registered_at": "8/2/2026 11:48:23",
+      "precision": "town"
     }
   ]
 }
