@@ -1,14 +1,13 @@
 {
-  "generated_at": "2026-08-02T12:51:59+09:00",
+  "generated_at": "2026-08-03T15:38:42+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 2,
+  "total": 3,
   "by_newspaper": {
-    "新聞折込チラシ": 1,
-    "ご紹介": 1
+    "新聞折込チラシ": 3
   },
   "customers": [
     {
@@ -24,16 +23,28 @@
       "precision": "town"
     },
     {
-      "id": "2508389bb04c",
-      "loc_group": "5ab931be98",
-      "lat": 35.145433,
-      "lng": 136.986686,
-      "area": "愛知県名古屋市天白区",
+      "id": "26a4adeaf4c7",
+      "loc_group": "71d40c8ef2",
+      "lat": 35.21209,
+      "lng": 136.991738,
+      "area": "愛知県名古屋市守山区",
+      "gender": "女性",
+      "age_group": "70代以上",
+      "newspaper": "新聞折込チラシ",
+      "registered_at": "8/3/2026 15:37:21",
+      "precision": "chome"
+    },
+    {
+      "id": "0dc91479f952",
+      "loc_group": "4ce62b7ad0",
+      "lat": 35.203715,
+      "lng": 136.994683,
+      "area": "愛知県名古屋市守山区",
       "gender": "男性",
-      "age_group": "30代",
-      "newspaper": "ご紹介",
-      "registered_at": "8/2/2026 12:35:54",
-      "precision": "town"
+      "age_group": "60代",
+      "newspaper": "新聞折込チラシ",
+      "registered_at": "8/3/2026 15:38:05",
+      "precision": "chome"
     }
   ]
 }
