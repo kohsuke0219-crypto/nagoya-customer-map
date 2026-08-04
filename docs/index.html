@@ -401,6 +401,23 @@ function catsOf(c) {
   return arr.length ? arr : ["未回答"];
 }
 
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
+// 日付文字列を「2026/8/4（火）」形式に整える。解析できなければそのまま返す。
+function formatVisitDate(s) {
+  if (!s) return "";
+  const str = String(s).trim();
+  let y, mo, d;
+  let m = str.match(/(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);      // YYYY/M/D
+  if (m) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else {
+    m = str.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);        // M/D/YYYY
+    if (m) { mo = +m[1]; d = +m[2]; y = +m[3]; }
+  }
+  if (!y) return str;
+  const wd = WEEKDAYS[new Date(y, mo - 1, d).getDay()];
+  return `${y}/${mo}/${d}（${wd}）`;
+}
+
 function popupHtml(c) {
   const delBtn = c.id
     ? `<br><button class="del-btn" data-del="${esc(c.id)}">🗑 このデータを削除</button>`
@@ -412,10 +429,9 @@ function popupHtml(c) {
     `<b>${esc(c.newspaper || "未回答")}</b><br>` +
     `${esc(c.area || "地域不明")}<br>` +
     `性別: ${esc(c.gender || "-")}／年代: ${esc(c.age_group || "-")}<br>` +
-    optLine("来店日", c.visit_date) +
+    optLine("来店日", formatVisitDate(c.visit_date)) +
     optLine("卸金額", c.amount) +
-    `商品分類: ${esc(cats)}<br>` +
-    `登録: ${esc(c.registered_at || "-")}` +
+    `商品分類: ${esc(cats)}` +
     delBtn
   );
 }
@@ -984,9 +1000,10 @@ function buildAnalysisHtml() {
   const cats = orderedEntries(catMap, CATEGORY_ORDER);
   // 市区町村（件数降順）
   const areas = [...countBy(recs, (r) => r.area).entries()].sort((a, b) => b[1] - a[1]);
-  // 日別（来店日を優先、無ければ登録日時。日付昇順）
+  // 日別（来店日を優先、無ければ登録日時。日付昇順→ラベルは「2026/8/4（火）」形式）
   const byDate = [...countBy(recs, (r) => dateOf(r.visit_date || r.registered_at)).entries()]
-    .sort((a, b) => a[0].localeCompare(b[0]));
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([d, n]) => [formatVisitDate(d) || d, n]);
 
   return (
     barChartHtml("来店のきっかけ", kikkake, npColor) +
