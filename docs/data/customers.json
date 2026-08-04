@@ -1,13 +1,14 @@
 {
-  "generated_at": "2026-08-03T15:38:42+09:00",
+  "generated_at": "2026-08-04T10:15:47+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 3,
+  "total": 4,
   "by_newspaper": {
-    "新聞折込チラシ": 3
+    "新聞折込チラシ": 3,
+    "通りすがり": 1
   },
   "customers": [
     {
@@ -45,6 +46,18 @@
       "newspaper": "新聞折込チラシ",
       "registered_at": "8/3/2026 15:38:05",
       "precision": "chome"
+    },
+    {
+      "id": "01735bdc61b8",
+      "loc_group": "43274107c0",
+      "lat": 35.217245,
+      "lng": 137.010231,
+      "area": "愛知県尾張旭市",
+      "gender": "男性",
+      "age_group": "70代以上",
+      "newspaper": "通りすがり",
+      "registered_at": "8/4/2026 10:15:02",
+      "precision": "town"
     }
   ]
 }
