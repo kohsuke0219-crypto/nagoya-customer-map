@@ -1,93 +1,88 @@
 {
-  "generated_at": "2026-08-04T13:17:36+09:00",
+  "generated_at": "2026-08-04T14:03:47+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 5,
+  "total": 4,
   "by_newspaper": {
     "新聞折込チラシ": 3,
-    "通りすがり": 1,
-    "ティッシュ": 1
+    "通りすがり　看板見て": 1
   },
   "customers": [
     {
-      "id": "e8a0e96aa7a8",
+      "id": "e328ae9ecbdb",
       "loc_group": "c610b45a0a",
-      "lat": 35.205414,
-      "lng": 136.985192,
+      "lat": 35.206394,
+      "lng": 136.986357,
       "area": "愛知県名古屋市守山区",
       "gender": "女性",
       "age_group": "70代以上",
       "newspaper": "新聞折込チラシ",
-      "visit_date": "",
-      "amount": "",
-      "categories": [],
-      "registered_at": "8/2/2026 11:48:23",
+      "visit_date": "8/1/2026",
+      "amount": "50万以下",
+      "categories": [
+        "貴金属",
+        "ジュエリー",
+        "時計",
+        "古銭"
+      ],
+      "registered_at": "8/4/2026 14:00:11",
       "precision": "town"
     },
     {
-      "id": "26a4adeaf4c7",
+      "id": "89d948b71cc1",
       "loc_group": "71d40c8ef2",
-      "lat": 35.21209,
-      "lng": 136.991738,
+      "lat": 35.211455,
+      "lng": 136.992045,
       "area": "愛知県名古屋市守山区",
       "gender": "女性",
       "age_group": "70代以上",
       "newspaper": "新聞折込チラシ",
-      "visit_date": "",
-      "amount": "",
-      "categories": [],
-      "registered_at": "8/3/2026 15:37:21",
+      "visit_date": "8/2/2026",
+      "amount": "50万以下",
+      "categories": [
+        "貴金属",
+        "ジュエリー",
+        "ヤフオク財布"
+      ],
+      "registered_at": "8/4/2026 14:01:34",
       "precision": "chome"
     },
     {
-      "id": "0dc91479f952",
+      "id": "2af5b1e2f035",
       "loc_group": "4ce62b7ad0",
-      "lat": 35.203715,
-      "lng": 136.994683,
+      "lat": 35.203692,
+      "lng": 136.994219,
       "area": "愛知県名古屋市守山区",
       "gender": "男性",
       "age_group": "60代",
       "newspaper": "新聞折込チラシ",
-      "visit_date": "",
-      "amount": "",
-      "categories": [],
-      "registered_at": "8/3/2026 15:38:05",
+      "visit_date": "8/2/2026",
+      "amount": "10万以下",
+      "categories": [
+        "カメラ"
+      ],
+      "registered_at": "8/4/2026 14:02:21",
       "precision": "chome"
     },
     {
-      "id": "01735bdc61b8",
+      "id": "4c7c0df5c2b3",
       "loc_group": "43274107c0",
-      "lat": 35.217245,
-      "lng": 137.010231,
+      "lat": 35.217852,
+      "lng": 137.010285,
       "area": "愛知県尾張旭市",
       "gender": "男性",
       "age_group": "70代以上",
-      "newspaper": "通りすがり",
-      "visit_date": "",
-      "amount": "",
-      "categories": [],
-      "registered_at": "8/4/2026 10:15:02",
-      "precision": "town"
-    },
-    {
-      "id": "c75b103eba07",
-      "loc_group": "8f38ced913",
-      "lat": 35.166876,
-      "lng": 136.912393,
-      "area": "愛知県名古屋市中区",
-      "gender": "男性",
-      "age_group": "10代",
-      "newspaper": "ティッシュ",
-      "visit_date": "8/4/2026",
-      "amount": "50万以下",
+      "newspaper": "通りすがり　看板見て",
+      "visit_date": "8/3/2026",
+      "amount": "10万以下",
       "categories": [
-        "ブランド"
+        "金歯"
       ],
-      "registered_at": "8/4/2026 13:17:00",
-      "precision": "chome"
+      "registered_at": "8/4/2026 14:03:11",
+      "precision": "town"
     }
   ]
 }
