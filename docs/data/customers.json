@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-04T10:15:47+09:00",
+  "generated_at": "2026-08-04T12:09:04+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
@@ -20,6 +20,9 @@
       "gender": "女性",
       "age_group": "70代以上",
       "newspaper": "新聞折込チラシ",
+      "visit_date": "",
+      "amount": "",
+      "categories": [],
       "registered_at": "8/2/2026 11:48:23",
       "precision": "town"
     },
@@ -32,6 +35,9 @@
       "gender": "女性",
       "age_group": "70代以上",
       "newspaper": "新聞折込チラシ",
+      "visit_date": "",
+      "amount": "",
+      "categories": [],
       "registered_at": "8/3/2026 15:37:21",
       "precision": "chome"
     },
@@ -44,6 +50,9 @@
       "gender": "男性",
       "age_group": "60代",
       "newspaper": "新聞折込チラシ",
+      "visit_date": "",
+      "amount": "",
+      "categories": [],
       "registered_at": "8/3/2026 15:38:05",
       "precision": "chome"
     },
@@ -56,6 +65,9 @@
       "gender": "男性",
       "age_group": "70代以上",
       "newspaper": "通りすがり",
+      "visit_date": "",
+      "amount": "",
+      "categories": [],
       "registered_at": "8/4/2026 10:15:02",
       "precision": "town"
     }
