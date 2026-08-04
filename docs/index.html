@@ -192,16 +192,21 @@
   }
   #analyzeCard .a-total { font-size: 13px; color: var(--muted); }
   #analyzeCard .a-total b { font-size: 20px; color: var(--brand); }
-  .chart { margin: 16px 0; }
+  .chart { margin: 22px 0; }
   .chart h3 {
-    font-size: 13px; font-weight: 700; color: #374151; margin: 0 0 8px;
-    border-bottom: 1px solid #eef0f3; padding-bottom: 6px;
+    font-size: 15px; font-weight: 800; color: var(--brand-dark); margin: 0 0 12px;
+    padding: 3px 0 3px 11px; border-left: 5px solid var(--brand); line-height: 1.2;
   }
-  .bar-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; }
-  .bar-row .bar-label { flex: 0 0 34%; max-width: 34%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bar-track { flex: 1 1 auto; background: #eef0f3; border-radius: 5px; height: 18px; position: relative; }
-  .bar-fill { height: 100%; border-radius: 5px; min-width: 2px; }
-  .bar-row .bar-val { flex: 0 0 auto; font-variant-numeric: tabular-nums; font-weight: 700; color: #374151; min-width: 54px; text-align: right; }
+  .bar-row { display: flex; align-items: center; gap: 10px; margin: 8px 0; font-size: 13px; }
+  .bar-row .bar-label { flex: 0 0 30%; max-width: 30%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+  .bar-track { flex: 1 1 auto; background: #eef1f6; border-radius: 7px; height: 24px; position: relative; overflow: hidden; }
+  .bar-fill {
+    height: 100%; border-radius: 7px; min-width: 3px;
+    display: flex; align-items: center; justify-content: flex-end;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.10); transition: width .3s;
+  }
+  .bar-fill b { color: #fff; font-size: 12px; font-weight: 800; padding-right: 8px; text-shadow: 0 1px 1px rgba(0,0,0,.25); white-space: nowrap; }
+  .bar-row .bar-val { flex: 0 0 auto; font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; color: var(--muted); font-size: 12px; font-weight: 700; }
   .a-empty { color: var(--muted); font-size: 14px; padding: 20px 0; text-align: center; }
 </style>
 </head>
@@ -209,7 +214,6 @@
 <div id="titlebar">
   買取大吉 守山大森店 来店客マップ
   <a href="./manual.html" style="color:var(--gold,#F2C230);font-size:12px;font-weight:700;text-decoration:none;margin-left:10px">❓使い方</a>
-  <small>新聞折込チラシ効果分析（位置は個人情報保護のため約100m丸め）</small>
 </div>
 <div id="map"></div>
 
@@ -357,8 +361,8 @@ function ensureDelConfig() {
   let cfg = getDelConfig();
   if (cfg.url && cfg.token) return cfg;
   const url = prompt(
-    "【初回設定】削除機能を使うには、管理者から共有された\n" +
-    "Apps Script WebアプリのURLを貼り付けてください。",
+    "【初期設定】削除・今すぐ反映を使うには、管理者から共有された\n" +
+    "URL（https://…/exec）を貼り付けてください。",
     cfg.url || ""
   );
   if (url === null) return null;
@@ -687,7 +691,7 @@ const UpdateCtl = L.Control.extend({
       '<button id="updateBtn" type="button">🔄 更新</button>' +
       '<div id="updateStatus">読み込み中…</div>' +
       '<button id="analyzeBtn" type="button">📊 分析・CSV</button>' +
-      '<button id="gearBtn" type="button">⚙ 削除の設定</button>';
+      '<button id="gearBtn" type="button">⚙ 初期設定</button>';
     L.DomEvent.disableClickPropagation(div);
     updateBtnEl = div.querySelector("#updateBtn");
     updateStatusEl = div.querySelector("#updateStatus");
@@ -695,7 +699,7 @@ const UpdateCtl = L.Control.extend({
     div.querySelector("#analyzeBtn").addEventListener("click", () => openAnalysis());
     div.querySelector("#gearBtn").addEventListener("click", () => {
       const cfg = ensureDelConfig();
-      if (cfg) toast("削除の設定を保存しました");
+      if (cfg) toast("初期設定を保存しました");
     });
     return div;
   },
@@ -860,7 +864,7 @@ function onUpdateClick() {
   if (!cfg.url || !cfg.token) {
     // 「今すぐ反映」未設定：ビルドを起動できないので設定を案内し、
     // 少なくとも確定済みの最新データは読み直す（反映は次の自動更新後）。
-    toast("「今すぐ反映」は未設定です。⚙削除の設定 でURLと合言葉を登録してください");
+    toast("「今すぐ反映」は未設定です。⚙初期設定 でURLと合言葉を登録してください");
     loadData({ force: true });
     return;
   }
@@ -945,19 +949,27 @@ function countBy(records, keyFn) {
   return map;
 }
 
-// entries: [[label, count], ...]（この順で表示）。colorFn(label)→色。
+// グラフの棒に使う鮮やかな色（1グラフ内で棒ごとに色を変えて見やすく）
+const CHART_PALETTE = [
+  "#2563eb", "#0d9488", "#f59e0b", "#db2777", "#7c3aed",
+  "#0891b2", "#65a30d", "#ea580c", "#e11d48", "#64748b",
+];
+
+// entries: [[label, count], ...]（この順で表示）。colorFn(label,i)→色。
+// 省略時は棒ごとにパレットの色を順番に割り当てる。
 function barChartHtml(title, entries, colorFn) {
   const max = entries.reduce((m, e) => Math.max(m, e[1]), 0) || 1;
   const total = entries.reduce((s, e) => s + e[1], 0) || 1;
   let rows = "";
-  entries.forEach(([label, count]) => {
-    const pct = Math.round((count / max) * 100);
+  entries.forEach(([label, count], i) => {
+    const pct = Math.max(Math.round((count / max) * 100), 6);  // 最小幅で数字が見えるように
     const share = Math.round((count / total) * 100);
-    const color = colorFn ? colorFn(label) : "#153C96";
+    const color = colorFn ? colorFn(label, i) : CHART_PALETTE[i % CHART_PALETTE.length];
     rows +=
       `<div class="bar-row"><span class="bar-label" title="${esc(label)}">${esc(label)}</span>` +
-      `<span class="bar-track"><span class="bar-fill" style="width:${pct}%;background:${color}"></span></span>` +
-      `<span class="bar-val">${count}件 (${share}%)</span></div>`;
+      `<span class="bar-track"><span class="bar-fill" style="width:${pct}%;background:${color}">` +
+      `<b>${count}件</b></span></span>` +
+      `<span class="bar-val">${share}%</span></div>`;
   });
   return `<div class="chart"><h3>${esc(title)}</h3>${rows}</div>`;
 }
@@ -1006,13 +1018,13 @@ function buildAnalysisHtml() {
     .map(([d, n]) => [formatVisitDate(d) || d, n]);
 
   return (
-    barChartHtml("来店のきっかけ", kikkake, npColor) +
-    barChartHtml("卸金額", amounts, () => "#b45309") +
-    barChartHtml("商品分類（複数計上）", cats, () => "#0891b2") +
-    barChartHtml("年代", ages, () => "#153C96") +
-    barChartHtml("性別", genders, () => "#0d9488") +
-    barChartHtml("市区町村", areas, () => "#7c3aed") +
-    barChartHtml("日別 来店数", byDate, () => "#ea580c")
+    barChartHtml("来店のきっかけ", kikkake, npColor) +  // 地図のピンと同じ色
+    barChartHtml("卸金額", amounts) +
+    barChartHtml("商品分類（複数計上）", cats) +
+    barChartHtml("年代", ages) +
+    barChartHtml("性別", genders) +
+    barChartHtml("市区町村", areas) +
+    barChartHtml("日別 来店数", byDate)
   );
 }
 
