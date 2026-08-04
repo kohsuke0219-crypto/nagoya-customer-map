@@ -1,14 +1,15 @@
 {
-  "generated_at": "2026-08-04T12:09:04+09:00",
+  "generated_at": "2026-08-04T13:17:36+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 4,
+  "total": 5,
   "by_newspaper": {
     "新聞折込チラシ": 3,
-    "通りすがり": 1
+    "通りすがり": 1,
+    "ティッシュ": 1
   },
   "customers": [
     {
@@ -70,6 +71,23 @@
       "categories": [],
       "registered_at": "8/4/2026 10:15:02",
       "precision": "town"
+    },
+    {
+      "id": "c75b103eba07",
+      "loc_group": "8f38ced913",
+      "lat": 35.166876,
+      "lng": 136.912393,
+      "area": "愛知県名古屋市中区",
+      "gender": "男性",
+      "age_group": "10代",
+      "newspaper": "ティッシュ",
+      "visit_date": "8/4/2026",
+      "amount": "50万以下",
+      "categories": [
+        "ブランド"
+      ],
+      "registered_at": "8/4/2026 13:17:00",
+      "precision": "chome"
     }
   ]
 }
