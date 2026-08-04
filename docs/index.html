@@ -254,6 +254,8 @@ const FALLBACK_COLOR = "#64748b";
 // 性別・年代の表示順（この順で絞り込みチェックボックスを並べる）
 const GENDER_ORDER = ["男性", "女性", "その他"];
 const AGE_ORDER = ["10代", "20代", "30代", "40代", "50代", "60代", "70代以上"];
+const AMOUNT_ORDER = ["10万以下", "30万以下", "50万以下", "100万以下", "それ以上"];
+const CATEGORY_ORDER = ["貴金属", "ジュエリー", "ブランド", "時計", "その他"];
 
 // 既知の順番→前に、未知の値→後ろ（名前順）で並べる
 function orderValues(values, order) {
@@ -304,9 +306,10 @@ let colorOf = {};           // newspaper -> color
 let countOf = {};           // newspaper -> 表示中の件数
 let grandTotal = 0;         // 表示中の合計件数
 
-// 絞り込みの値リストと、現在有効な値の集合（新聞社×性別×年代のAND条件）
-let npValues = [], genderValues = [], ageValues = [];
-let activeNp = new Set(), activeGender = new Set(), activeAge = new Set();
+// 絞り込みの値リストと、現在有効な値の集合（きっかけ×性別×年代×卸金額×商品分類のAND）
+let npValues = [], genderValues = [], ageValues = [], amountValues = [], categoryValues = [];
+let activeNp = new Set(), activeGender = new Set(), activeAge = new Set(),
+    activeAmount = new Set(), activeCategory = new Set();
 
 // 再描画のために保持するコントロール/要素の参照
 let filterCtl = null, summaryCtl = null, legendCtl = null;
@@ -392,14 +395,26 @@ function esc(s) {
   );
 }
 
+// 商品分類（複数）を配列で返す。未入力は ["未回答"]。
+function catsOf(c) {
+  const arr = Array.isArray(c && c.categories) ? c.categories.filter(Boolean) : [];
+  return arr.length ? arr : ["未回答"];
+}
+
 function popupHtml(c) {
   const delBtn = c.id
     ? `<br><button class="del-btn" data-del="${esc(c.id)}">🗑 このデータを削除</button>`
     : "";
+  const cats = catsOf(c).join("、");
+  const optLine = (label, val) =>
+    val && val !== "未回答" ? `${label}: ${esc(val)}<br>` : "";
   return (
     `<b>${esc(c.newspaper || "未回答")}</b><br>` +
     `${esc(c.area || "地域不明")}<br>` +
     `性別: ${esc(c.gender || "-")}／年代: ${esc(c.age_group || "-")}<br>` +
+    optLine("来店日", c.visit_date) +
+    optLine("卸金額", c.amount) +
+    `商品分類: ${esc(cats)}<br>` +
     `登録: ${esc(c.registered_at || "-")}` +
     delBtn
   );
@@ -511,13 +526,16 @@ function badgeIcon(count) {
   });
 }
 
-// 現在のフィルタ（新聞社×性別×年代のAND）で表示対象と件数を更新
+// 現在のフィルタ（きっかけ×性別×年代×卸金額×商品分類のAND）で表示対象と件数を更新
+// ※商品分類は複数値。選択中のいずれかに該当すれば表示（OR）。
 function applyFilters() {
   countOf = {};
   npValues.forEach((np) => { countOf[np] = 0; });
   grandTotal = 0;
   visibleMetas = markersMeta.filter((m) =>
-    activeNp.has(m.np) && activeGender.has(m.gender) && activeAge.has(m.age)
+    activeNp.has(m.np) && activeGender.has(m.gender) && activeAge.has(m.age) &&
+    activeAmount.has(m.amount) &&
+    m.categories.some((cat) => activeCategory.has(cat))
   );
   visibleMetas.forEach((m) => {
     countOf[m.np] = (countOf[m.np] || 0) + 1;
@@ -584,18 +602,23 @@ function buildControls() {
     onAdd: function () {
       const div = L.DomUtil.create("div", "panel");
       div.id = "filterPanel";
-      div.innerHTML =
-        "<h3>絞り込み</h3>" +
+      let html = "<h3>絞り込み</h3>" +
         filterGroupHtml("来店のきっかけ", npValues, "np", true) +
         filterGroupHtml("性別", genderValues, "gender", false) +
-        filterGroupHtml("年代", ageValues, "age", false);
+        filterGroupHtml("年代", ageValues, "age", false) +
+        filterGroupHtml("卸金額", amountValues, "amount", false);
+      if (categoryValues.length)
+        html += filterGroupHtml("商品分類", categoryValues, "category", false);
+      div.innerHTML = html;
       L.DomEvent.disableClickPropagation(div);
       L.DomEvent.disableScrollPropagation(div);
+      const setOf = (kind) =>
+        kind === "np" ? activeNp : kind === "gender" ? activeGender :
+        kind === "age" ? activeAge : kind === "amount" ? activeAmount : activeCategory;
       div.querySelectorAll("input[type=checkbox]").forEach((cb) => {
         cb.addEventListener("change", () => {
-          const kind = cb.getAttribute("data-kind");
+          const set = setOf(cb.getAttribute("data-kind"));
           const val = cb.getAttribute("data-val");
-          const set = kind === "np" ? activeNp : kind === "gender" ? activeGender : activeAge;
           if (cb.checked) set.add(val); else set.delete(val);
           applyFilters();
         });
@@ -670,8 +693,9 @@ function clearRender() {
   colorOf = {};
   countOf = {};
   grandTotal = 0;
-  npValues = []; genderValues = []; ageValues = [];
+  npValues = []; genderValues = []; ageValues = []; amountValues = []; categoryValues = [];
   activeNp = new Set(); activeGender = new Set(); activeAge = new Set();
+  activeAmount = new Set(); activeCategory = new Set();
   if (filterCtl) { map.removeControl(filterCtl); filterCtl = null; }
   if (summaryCtl) { map.removeControl(summaryCtl); summaryCtl = null; }
   if (legendCtl) { map.removeControl(legendCtl); legendCtl = null; }
@@ -702,10 +726,17 @@ function render(data) {
   npValues = newspapers.slice();
   genderValues = orderValues([...new Set(customers.map((c) => c.gender || "未回答"))], GENDER_ORDER);
   ageValues = orderValues([...new Set(customers.map((c) => c.age_group || "未回答"))], AGE_ORDER);
+  amountValues = orderValues([...new Set(customers.map((c) => c.amount || "未回答"))], AMOUNT_ORDER);
+  // 商品分類は複数値。全員のカテゴリを平たくして一覧化
+  const catSet = new Set();
+  customers.forEach((c) => catsOf(c).forEach((k) => catSet.add(k)));
+  categoryValues = orderValues([...catSet], CATEGORY_ORDER);
   // 初期状態は全て表示
   activeNp = new Set(npValues);
   activeGender = new Set(genderValues);
   activeAge = new Set(ageValues);
+  activeAmount = new Set(amountValues);
+  activeCategory = new Set(categoryValues);
 
   customerLayer = L.layerGroup().addTo(map);
   markersMeta = customers.map((c) => {
@@ -724,6 +755,8 @@ function render(data) {
       marker, np,
       gender: c.gender || "未回答",
       age: c.age_group || "未回答",
+      amount: c.amount || "未回答",
+      categories: catsOf(c),      // 商品分類（複数）
       group: c.loc_group || "",   // 丁目単位のまとめ用（無ければ個別扱い）
       lat: c.lat, lng: c.lng,
     };
@@ -941,17 +974,24 @@ function buildAnalysisHtml() {
 
   // きっかけ（件数降順）
   const kikkake = [...countBy(recs, (r) => r.newspaper).entries()].sort((a, b) => b[1] - a[1]);
-  // 年代・性別（既知順）
+  // 年代・性別・卸金額（既知順）
   const ages = orderedEntries(countBy(recs, (r) => r.age_group), AGE_ORDER);
   const genders = orderedEntries(countBy(recs, (r) => r.gender), GENDER_ORDER);
+  const amounts = orderedEntries(countBy(recs, (r) => r.amount || "未回答"), AMOUNT_ORDER);
+  // 商品分類（複数値：1人が複数カテゴリに計上）。既知順
+  const catMap = new Map();
+  recs.forEach((r) => catsOf(r).forEach((k) => catMap.set(k, (catMap.get(k) || 0) + 1)));
+  const cats = orderedEntries(catMap, CATEGORY_ORDER);
   // 市区町村（件数降順）
   const areas = [...countBy(recs, (r) => r.area).entries()].sort((a, b) => b[1] - a[1]);
-  // 日別（日付昇順）
-  const byDate = [...countBy(recs, (r) => dateOf(r.registered_at)).entries()]
+  // 日別（来店日を優先、無ければ登録日時。日付昇順）
+  const byDate = [...countBy(recs, (r) => dateOf(r.visit_date || r.registered_at)).entries()]
     .sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
     barChartHtml("来店のきっかけ", kikkake, npColor) +
+    barChartHtml("卸金額", amounts, () => "#b45309") +
+    barChartHtml("商品分類（複数計上）", cats, () => "#0891b2") +
     barChartHtml("年代", ages, () => "#153C96") +
     barChartHtml("性別", genders, () => "#0d9488") +
     barChartHtml("市区町村", areas, () => "#7c3aed") +
@@ -985,7 +1025,8 @@ function openAnalysis() {
 // CSV ダウンロード（Excel 用に BOM 付き UTF-8）
 function downloadCsv() {
   const recs = currentRecords();
-  const header = ["登録日時", "市区町村", "性別", "年代", "来店のきっかけ", "緯度", "経度"];
+  const header = ["登録日時", "来店日", "市区町村", "性別", "年代",
+    "来店のきっかけ", "卸金額", "商品分類", "緯度", "経度"];
   const esccsv = (v) => {
     const s = String(v == null ? "" : v);
     return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -993,7 +1034,8 @@ function downloadCsv() {
   const lines = [header.join(",")];
   recs.forEach((r) => {
     lines.push([
-      r.registered_at, r.area, r.gender, r.age_group, r.newspaper, r.lat, r.lng,
+      r.registered_at, r.visit_date || "", r.area, r.gender, r.age_group,
+      r.newspaper, r.amount || "", catsOf(r).join("、"), r.lat, r.lng,
     ].map(esccsv).join(","));
   });
   const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });

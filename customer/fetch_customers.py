@@ -31,17 +31,25 @@ logger = logging.getLogger(__name__)
 # 各項目を、ヘッダ（質問文）に含まれるキーワードで見分ける。
 # 上から順に評価し、最初にキーワードを含んだ列をその項目に割り当てる。
 FIELD_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
-    ("registered_at", ("タイムスタンプ", "timestamp", "登録日", "日時")),
+    ("registered_at", ("タイムスタンプ", "timestamp", "登録日時")),
     ("postal_code", ("郵便", "postal", "zip", "〒")),
     ("chome", ("丁目", "chome")),
+    # ★visit_date/amount/category は newspaper より前に評価する。
+    #   （newspaper のキーワード「来店」が「来店日」を横取りしないように）
+    ("visit_date", ("来店日", "来店年月日", "来店した", "訪問日")),
     ("gender", ("性別", "gender", "男女")),
     ("age_group", ("年代", "年齢", "age")),
+    ("amount", ("卸金額", "金額", "買取額", "査定", "価格")),
+    ("category", ("商品分類", "分類", "商品", "品目", "カテゴリ")),
     # 「新聞社」でも「来店のきっかけ」でも認識できるようにキーワードを広める
     ("newspaper", ("新聞", "newspaper", "paper", "紙", "きっかけ", "来店", "経路", "媒体", "知")),
     ("address", ("住所", "address", "所在", "町名", "番地")),
 ]
 
-SCHEMA_FIELDS = ["postal_code", "chome", "address", "gender", "age_group", "newspaper", "registered_at"]
+SCHEMA_FIELDS = [
+    "postal_code", "chome", "address", "gender", "age_group", "newspaper",
+    "visit_date", "amount", "category", "registered_at",
+]
 
 
 def _build_header_map(headers: list[str]) -> dict[str, str]:

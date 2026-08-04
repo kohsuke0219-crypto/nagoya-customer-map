@@ -85,6 +85,18 @@ def _record_id(rec: dict[str, Any]) -> str:
     return hashlib.sha256(_id_key(rec).encode("utf-8")).hexdigest()[:12]
 
 
+def _parse_categories(value: Any) -> list[str]:
+    """商品分類（複数選択）の文字列をリストに分解する。
+
+    Googleフォームのチェックボックス回答は「貴金属, 時計」のように
+    区切り文字で連結された1セル。カンマ/読点/セミコロンで分割する。
+    """
+    if not value:
+        return []
+    parts = re.split(r"[,、;；]\s*", str(value))
+    return [p.strip() for p in parts if p.strip()]
+
+
 def _loc_group(rec: dict[str, Any]) -> str:
     """同じ「郵便番号＋丁目」をまとめるための不可逆なグループID。
 
@@ -238,6 +250,9 @@ def build(
                 "gender": rec.get("gender", ""),
                 "age_group": rec.get("age_group", ""),
                 "newspaper": rec.get("newspaper", ""),
+                "visit_date": rec.get("visit_date", ""),   # 来店日
+                "amount": rec.get("amount", ""),           # 卸金額（区分）
+                "categories": _parse_categories(rec.get("category")),  # 商品分類（複数）
                 "registered_at": rec.get("registered_at", ""),
                 "precision": precision,  # chome/town/city/address（内部指標）
             }
