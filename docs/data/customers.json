@@ -1,14 +1,15 @@
 {
-  "generated_at": "2026-08-04T14:03:47+09:00",
+  "generated_at": "2026-08-07T14:15:33+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 4,
+  "total": 5,
   "by_newspaper": {
     "新聞折込チラシ": 3,
-    "通りすがり　看板見て": 1
+    "通りすがり　看板見て": 1,
+    "通りすがり": 1
   },
   "customers": [
     {
@@ -83,6 +84,25 @@
       ],
       "registered_at": "8/4/2026 14:03:11",
       "precision": "town"
+    },
+    {
+      "id": "5c84062a786c",
+      "loc_group": "1f4c9a26ce",
+      "lat": 35.196113,
+      "lng": 136.989575,
+      "area": "愛知県名古屋市名東区",
+      "gender": "男性",
+      "age_group": "30代",
+      "newspaper": "通りすがり",
+      "visit_date": "8/7/2026",
+      "amount": "10万以下",
+      "categories": [
+        "アンドロイドスマホ",
+        "ダンベル",
+        "靴"
+      ],
+      "registered_at": "8/7/2026 14:15:02",
+      "precision": "address"
     }
   ]
 }
