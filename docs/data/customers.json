@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-08T18:06:47+09:00",
+  "generated_at": "2026-08-08T19:19:12+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 6,
+  "total": 7,
   "by_newspaper": {
     "新聞折込チラシ": 3,
     "通りすがり　看板見て": 1,
-    "通りすがり": 1,
+    "通りすがり": 2,
     "ネット検索": 1
   },
   "customers": [
@@ -120,6 +120,25 @@
         "時計"
       ],
       "registered_at": "8/8/2026 18:05:57",
+      "precision": "address"
+    },
+    {
+      "id": "99828ed2238c",
+      "loc_group": "b61d5a2c4d",
+      "lat": 35.223479,
+      "lng": 137.050372,
+      "area": "愛知県尾張旭市",
+      "gender": "男性",
+      "age_group": "60代",
+      "newspaper": "通りすがり",
+      "visit_date": "8/8/2026",
+      "amount": "10万以下",
+      "categories": [
+        "バッグ",
+        "鍋",
+        "コップ"
+      ],
+      "registered_at": "8/8/2026 19:18:32",
       "precision": "address"
     }
   ]
