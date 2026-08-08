@@ -1,15 +1,16 @@
 {
-  "generated_at": "2026-08-07T14:15:33+09:00",
+  "generated_at": "2026-08-08T18:06:47+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 5,
+  "total": 6,
   "by_newspaper": {
     "新聞折込チラシ": 3,
     "通りすがり　看板見て": 1,
-    "通りすがり": 1
+    "通りすがり": 1,
+    "ネット検索": 1
   },
   "customers": [
     {
@@ -102,6 +103,23 @@
         "靴"
       ],
       "registered_at": "8/7/2026 14:15:02",
+      "precision": "address"
+    },
+    {
+      "id": "947bacded1a6",
+      "loc_group": "f972399182",
+      "lat": 35.210689,
+      "lng": 136.946684,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "20代",
+      "newspaper": "ネット検索",
+      "visit_date": "8/8/2026",
+      "amount": "10万以下",
+      "categories": [
+        "時計"
+      ],
+      "registered_at": "8/8/2026 18:05:57",
       "precision": "address"
     }
   ]
