@@ -1,17 +1,16 @@
 {
-  "generated_at": "2026-08-19T16:02:10+09:00",
+  "generated_at": "2026-08-20T16:03:34+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 9,
+  "total": 8,
   "by_newspaper": {
     "新聞折込チラシ": 3,
     "通りすがり　看板見て": 1,
     "通りすがり": 2,
-    "ネット検索": 2,
-    "CM・テレビ": 1
+    "ネット検索": 2
   },
   "customers": [
     {
@@ -140,24 +139,6 @@
         "コップ"
       ],
       "registered_at": "8/8/2026 19:18:32",
-      "precision": "address"
-    },
-    {
-      "id": "31f8b7537d7c",
-      "loc_group": "7495dabac7",
-      "lat": 35.204052,
-      "lng": 136.999305,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "40代",
-      "newspaper": "CM・テレビ",
-      "visit_date": "8/11/2026",
-      "amount": "100万以下",
-      "categories": [
-        "ブランド",
-        "時計"
-      ],
-      "registered_at": "8/16/2026 16:10:13",
       "precision": "address"
     },
     {
