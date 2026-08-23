@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-08-20T21:01:04+09:00",
+  "generated_at": "2026-08-23T12:37:32+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 9,
+  "total": 11,
   "by_newspaper": {
-    "新聞折込チラシ": 3,
+    "新聞折込チラシ": 4,
     "通りすがり　看板見て": 1,
     "通りすがり": 2,
-    "ネット検索": 2,
+    "ネット検索": 3,
     "CM・テレビ": 1
   },
   "customers": [
@@ -176,6 +176,44 @@
       ],
       "registered_at": "8/19/2026 15:43:39",
       "precision": "address"
+    },
+    {
+      "id": "70c048051117",
+      "loc_group": "6a620f73af",
+      "lat": 35.214524,
+      "lng": 137.037246,
+      "area": "愛知県尾張旭市",
+      "gender": "女性",
+      "age_group": "50代",
+      "newspaper": "新聞折込チラシ",
+      "visit_date": "8/23/2026",
+      "amount": "10万以下",
+      "categories": [
+        "貴金属",
+        "ジュエリー",
+        "急須",
+        "花瓶",
+        "コースターセット"
+      ],
+      "registered_at": "8/23/2026 11:50:36",
+      "precision": "address"
+    },
+    {
+      "id": "2c71690b0e3b",
+      "loc_group": "5171468a89",
+      "lat": 35.197982,
+      "lng": 136.976048,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "30代",
+      "newspaper": "ネット検索",
+      "visit_date": "8/22/2026",
+      "amount": "10万以下",
+      "categories": [
+        "商品券"
+      ],
+      "registered_at": "8/23/2026 11:52:18",
+      "precision": "chome"
     }
   ]
 }
