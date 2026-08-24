@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-24T17:26:09+09:00",
+  "generated_at": "2026-08-24T18:24:00+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 12,
+  "total": 14,
   "by_newspaper": {
     "新聞折込チラシ": 4,
     "通りすがり　看板見て": 1,
-    "通りすがり": 3,
+    "通りすがり": 5,
     "ネット検索": 3,
     "CM・テレビ": 1
   },
@@ -231,6 +231,42 @@
       ],
       "registered_at": "8/23/2026 17:52:28",
       "precision": "address"
+    },
+    {
+      "id": "bc91e7e85bcd",
+      "loc_group": "002cfb5847",
+      "lat": 35.132247,
+      "lng": 136.896115,
+      "area": "愛知県名古屋市熱田区",
+      "gender": "男性",
+      "age_group": "50代",
+      "newspaper": "通りすがり",
+      "visit_date": "8/24/2026",
+      "amount": "10万以下",
+      "categories": [
+        "VISA　ギフト券"
+      ],
+      "registered_at": "8/24/2026 17:54:05",
+      "precision": "chome"
+    },
+    {
+      "id": "7f77804a507b",
+      "loc_group": "e051b66859",
+      "lat": 35.227509,
+      "lng": 136.857677,
+      "area": "愛知県名古屋市西区",
+      "gender": "女性",
+      "age_group": "50代",
+      "newspaper": "通りすがり",
+      "visit_date": "8/24/2026",
+      "amount": "30万以下",
+      "categories": [
+        "貴金属",
+        "ジュエリー",
+        "ブランド"
+      ],
+      "registered_at": "8/24/2026 17:55:39",
+      "precision": "town"
     }
   ]
 }
