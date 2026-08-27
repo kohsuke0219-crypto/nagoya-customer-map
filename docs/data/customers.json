@@ -1,17 +1,16 @@
 {
-  "generated_at": "2026-08-27T11:38:30+09:00",
+  "generated_at": "2026-08-27T18:16:07+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 16,
+  "total": 7,
   "by_newspaper": {
-    "新聞折込チラシ": 4,
+    "新聞折込チラシ": 3,
     "通りすがり　看板見て": 1,
-    "通りすがり": 7,
-    "ネット検索": 3,
-    "CM・テレビ": 1
+    "ネット検索": 1,
+    "通りすがり": 2
   },
   "customers": [
     {
@@ -88,117 +87,6 @@
       "precision": "town"
     },
     {
-      "id": "5c84062a786c",
-      "loc_group": "1f4c9a26ce",
-      "lat": 35.196113,
-      "lng": 136.989575,
-      "area": "愛知県名古屋市名東区",
-      "gender": "男性",
-      "age_group": "30代",
-      "newspaper": "通りすがり",
-      "visit_date": "8/7/2026",
-      "amount": "10万以下",
-      "categories": [
-        "アンドロイドスマホ",
-        "ダンベル",
-        "靴"
-      ],
-      "registered_at": "8/7/2026 14:15:02",
-      "precision": "address"
-    },
-    {
-      "id": "947bacded1a6",
-      "loc_group": "f972399182",
-      "lat": 35.210689,
-      "lng": 136.946684,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "20代",
-      "newspaper": "ネット検索",
-      "visit_date": "8/8/2026",
-      "amount": "10万以下",
-      "categories": [
-        "時計"
-      ],
-      "registered_at": "8/8/2026 18:05:57",
-      "precision": "address"
-    },
-    {
-      "id": "99828ed2238c",
-      "loc_group": "b61d5a2c4d",
-      "lat": 35.223479,
-      "lng": 137.050372,
-      "area": "愛知県尾張旭市",
-      "gender": "男性",
-      "age_group": "60代",
-      "newspaper": "通りすがり",
-      "visit_date": "8/8/2026",
-      "amount": "10万以下",
-      "categories": [
-        "バッグ",
-        "鍋",
-        "コップ"
-      ],
-      "registered_at": "8/8/2026 19:18:32",
-      "precision": "address"
-    },
-    {
-      "id": "31f8b7537d7c",
-      "loc_group": "7495dabac7",
-      "lat": 35.204052,
-      "lng": 136.999305,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "40代",
-      "newspaper": "CM・テレビ",
-      "visit_date": "8/11/2026",
-      "amount": "100万以下",
-      "categories": [
-        "ブランド",
-        "時計"
-      ],
-      "registered_at": "8/16/2026 16:10:13",
-      "precision": "address"
-    },
-    {
-      "id": "d7063eea4332",
-      "loc_group": "baaa64453d",
-      "lat": 35.122514,
-      "lng": 136.995799,
-      "area": "愛知県名古屋市天白区",
-      "gender": "女性",
-      "age_group": "50代",
-      "newspaper": "ネット検索",
-      "visit_date": "8/19/2026",
-      "amount": "10万以下",
-      "categories": [
-        "食器など"
-      ],
-      "registered_at": "8/19/2026 15:43:39",
-      "precision": "address"
-    },
-    {
-      "id": "70c048051117",
-      "loc_group": "6a620f73af",
-      "lat": 35.214524,
-      "lng": 137.037246,
-      "area": "愛知県尾張旭市",
-      "gender": "女性",
-      "age_group": "50代",
-      "newspaper": "新聞折込チラシ",
-      "visit_date": "8/23/2026",
-      "amount": "10万以下",
-      "categories": [
-        "貴金属",
-        "ジュエリー",
-        "急須",
-        "花瓶",
-        "コースターセット"
-      ],
-      "registered_at": "8/23/2026 11:50:36",
-      "precision": "address"
-    },
-    {
       "id": "2c71690b0e3b",
       "loc_group": "5171468a89",
       "lat": 35.197982,
@@ -214,23 +102,6 @@
       ],
       "registered_at": "8/23/2026 11:52:18",
       "precision": "chome"
-    },
-    {
-      "id": "3907b589cbce",
-      "loc_group": "715ebfad39",
-      "lat": 35.205651,
-      "lng": 136.953523,
-      "area": "愛知県名古屋市守山区",
-      "gender": "女性",
-      "age_group": "20代",
-      "newspaper": "通りすがり",
-      "visit_date": "8/23/2026",
-      "amount": "10万以下",
-      "categories": [
-        "ディーゼルバックパック"
-      ],
-      "registered_at": "8/23/2026 17:52:28",
-      "precision": "address"
     },
     {
       "id": "bc91e7e85bcd",
@@ -267,42 +138,6 @@
       ],
       "registered_at": "8/24/2026 17:55:39",
       "precision": "town"
-    },
-    {
-      "id": "57516c9991af",
-      "loc_group": "2431bbca14",
-      "lat": 35.204516,
-      "lng": 136.999947,
-      "area": "愛知県名古屋市守山区",
-      "gender": "女性",
-      "age_group": "30代",
-      "newspaper": "通りすがり",
-      "visit_date": "8/25/2026",
-      "amount": "10万以下",
-      "categories": [
-        "貴金属",
-        "ジュエリー",
-        "商品券"
-      ],
-      "registered_at": "8/25/2026 16:19:35",
-      "precision": "address"
-    },
-    {
-      "id": "864d97934536",
-      "loc_group": "23c61aba78",
-      "lat": 35.195115,
-      "lng": 137.000774,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "30代",
-      "newspaper": "通りすがり",
-      "visit_date": "8/27/2026",
-      "amount": "10万以下",
-      "categories": [
-        "ノートパソコン"
-      ],
-      "registered_at": "8/27/2026 11:37:46",
-      "precision": "address"
     }
   ]
 }
