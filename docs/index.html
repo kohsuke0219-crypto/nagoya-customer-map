@@ -274,14 +274,17 @@ function orderValues(values, order) {
 
 // ===== 地図初期化 =====
 const map = L.map("map", { zoomControl: true }).setView(INIT_CENTER, INIT_ZOOM);
-// CartoDB Positron（淡いグレー基調）でピンを際立たせる
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-  attribution:
-    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors ' +
-    '&copy; <a href="https://carto.com/attributions">CARTO</a>',
-  subdomains: "abcd",
-  maxZoom: 20,
-}).addTo(map);
+// Esri World Light Gray（淡いグレー基調・APIキー不要）でピンを際立たせる。
+// ※以前使っていた CARTO はAPIキー必須に変わり「API KEY REQUIRED」透かしが出るため変更。
+// z16 までのタイルを配信。それ以上は拡大表示（maxNativeZoom）で地図が消えないようにする。
+L.tileLayer(
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+  {
+    attribution: 'Tiles &copy; <a href="https://www.esri.com/">Esri</a>',
+    maxNativeZoom: 16,
+    maxZoom: 19,
+  }
+).addTo(map);
 
 // 店舗マーカー（赤い丸に家アイコン）＋「守山大森店」ラベルを常時表示
 const HOUSE_SVG =
