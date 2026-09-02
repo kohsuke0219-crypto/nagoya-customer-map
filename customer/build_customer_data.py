@@ -32,9 +32,14 @@ import re
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
+import requests
+
 from .fetch_customers import fetch_customers
 from .geocoder import GeocodeResult, Geocoder
 from .zip_to_coord import ZipToCoord
+
+# 国土地理院（GSI）の住所ジオコーダ。無料・APIキー不要・日本の住所に強い。
+GSI_ENDPOINT = "https://msearch.gsi.go.jp/address-search/AddressSearch"
 
 logger = logging.getLogger(__name__)
 
@@ -182,13 +187,53 @@ def _save_geocache(cache: dict[str, GeocodeResult]) -> None:
         logger.warning("geocache の保存に失敗しました")
 
 
+def _gsi_geocode(address: str) -> GeocodeResult | None:
+    """国土地理院の住所検索で座標化（無料・キー不要）。失敗時は None。"""
+    try:
+        resp = requests.get(
+            GSI_ENDPOINT, params={"q": address}, timeout=20,
+            headers={"User-Agent": "nagoya-customer-map"},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+    except (requests.RequestException, ValueError) as e:
+        logger.warning("GSI 住所検索エラー %r: %s", address, e)
+        return None
+    if not data:
+        return None
+    feat = data[0]
+    coords = (feat.get("geometry") or {}).get("coordinates")  # [lng, lat]
+    if not coords or len(coords) < 2:
+        return None
+    title = (feat.get("properties") or {}).get("title", "")
+    return GeocodeResult(latitude=coords[1], longitude=coords[0],
+                         formatted_address=title, status="OK")
+
+
+def _geocode_address(address: str, geocoder: Geocoder) -> GeocodeResult:
+    """住所を座標化。GSI(無料)を優先し、失敗時のみ Google にフォールバック。
+
+    結果は geocoder.cache（geocache.json）に保存して次回以降の API 節約とする。
+    """
+    cached = geocoder.cache.get(address)
+    if cached and cached.latitude is not None:
+        return cached
+    geo = _gsi_geocode(address)
+    if (geo is None or geo.latitude is None) and geocoder.available:
+        geo = geocoder.geocode(address)  # Google フォールバック（キーが有効な場合のみ）
+    if geo is None:
+        geo = GeocodeResult(None, None, status="FAILED")
+    geocoder.cache[address] = geo
+    return geo
+
+
 def _resolve_location(
     rec: dict[str, Any], converter: ZipToCoord, geocoder: Geocoder
 ) -> tuple[float, float, str, str, str] | None:
     """1レコードを (lat, lng, area, loc_group, precision) に変換。
 
     郵便番号(7桁)があればオフライン変換を優先。無ければ住所を
-    Google ジオコーディングする。どちらも失敗なら None。
+    GSI（無料）→Google の順でジオコーディング。どちらも失敗なら None。
     """
     postal = rec.get("postal_code", "")
     if len(postal) == 7:
@@ -199,10 +244,7 @@ def _resolve_location(
 
     address = (rec.get("address") or "").strip()
     if address:
-        if not geocoder.available:
-            logger.warning("住所ジオコーディング不可（GOOGLE_MAPS_API_KEY 未設定）")
-            return None
-        geo = geocoder.geocode(address)
+        geo = _geocode_address(address, geocoder)
         if geo.latitude is not None:
             area = _pref_city(geo.formatted_address) or _pref_city(address)
             return (geo.latitude, geo.longitude, area, _addr_group(address), "address")
@@ -258,9 +300,9 @@ def build(
             }
         )
 
-    if geocoder.api_call_count:
+    # 住所ジオコーディング結果（GSI/Google）をキャッシュ保存（次回のAPI節約）
+    if geocoder.cache:
         _save_geocache(geocoder.cache)
-        logger.info("住所ジオコーディング: API %d 回", geocoder.api_call_count)
 
     # 新聞社別集計（動的カテゴリ）
     by_newspaper: dict[str, int] = {}
