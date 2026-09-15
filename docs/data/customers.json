@@ -1,78 +1,22 @@
 {
-  "generated_at": "2026-09-15T19:12:58+09:00",
+  "generated_at": "2026-09-15T21:15:20+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 29,
+  "total": 24,
   "by_newspaper": {
-    "新聞折込チラシ": 4,
     "通りすがり　看板見て": 1,
     "通りすがり": 11,
-    "ネット検索": 4,
+    "ネット検索": 3,
     "CM・テレビ": 2,
+    "新聞折込チラシ": 1,
     "ご紹介": 4,
-    "通りがかり": 2,
-    "再来店": 1
+    "再来店": 1,
+    "通りがかり": 1
   },
   "customers": [
-    {
-      "id": "e328ae9ecbdb",
-      "loc_group": "c610b45a0a",
-      "lat": 35.206394,
-      "lng": 136.986357,
-      "area": "愛知県名古屋市守山区",
-      "gender": "女性",
-      "age_group": "70代以上",
-      "newspaper": "新聞折込チラシ",
-      "visit_date": "8/1/2026",
-      "amount": "50万以下",
-      "categories": [
-        "貴金属",
-        "ジュエリー",
-        "時計",
-        "古銭"
-      ],
-      "registered_at": "8/4/2026 14:00:11",
-      "precision": "town"
-    },
-    {
-      "id": "89d948b71cc1",
-      "loc_group": "71d40c8ef2",
-      "lat": 35.211455,
-      "lng": 136.992045,
-      "area": "愛知県名古屋市守山区",
-      "gender": "女性",
-      "age_group": "70代以上",
-      "newspaper": "新聞折込チラシ",
-      "visit_date": "8/2/2026",
-      "amount": "50万以下",
-      "categories": [
-        "貴金属",
-        "ジュエリー",
-        "ヤフオク財布"
-      ],
-      "registered_at": "8/4/2026 14:01:34",
-      "precision": "chome"
-    },
-    {
-      "id": "2af5b1e2f035",
-      "loc_group": "4ce62b7ad0",
-      "lat": 35.203692,
-      "lng": 136.994219,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "60代",
-      "newspaper": "新聞折込チラシ",
-      "visit_date": "8/2/2026",
-      "amount": "10万以下",
-      "categories": [
-        "カメラ"
-      ],
-      "registered_at": "8/4/2026 14:02:21",
-      "precision": "chome"
-    },
     {
       "id": "4c7c0df5c2b3",
       "loc_group": "43274107c0",
@@ -202,23 +146,6 @@
       "precision": "address"
     },
     {
-      "id": "2c71690b0e3b",
-      "loc_group": "5171468a89",
-      "lat": 35.197982,
-      "lng": 136.976048,
-      "area": "愛知県名古屋市守山区",
-      "gender": "男性",
-      "age_group": "30代",
-      "newspaper": "ネット検索",
-      "visit_date": "8/22/2026",
-      "amount": "10万以下",
-      "categories": [
-        "商品券"
-      ],
-      "registered_at": "8/23/2026 11:52:18",
-      "precision": "chome"
-    },
-    {
       "id": "3907b589cbce",
       "loc_group": "715ebfad39",
       "lat": 35.205625,
@@ -340,24 +267,6 @@
       ],
       "registered_at": "8/29/2026 12:18:40",
       "precision": "address"
-    },
-    {
-      "id": "b3b61f399d08",
-      "loc_group": "25c457f57a",
-      "lat": 35.211883,
-      "lng": 137.00037,
-      "area": "愛知県名古屋市守山区",
-      "gender": "女性",
-      "age_group": "40代",
-      "newspaper": "通りがかり",
-      "visit_date": "8/30/2026",
-      "amount": "10万以下",
-      "categories": [
-        "ジュエリー",
-        "ブランド"
-      ],
-      "registered_at": "8/30/2026 17:29:25",
-      "precision": "town"
     },
     {
       "id": "e6950ca01485",
