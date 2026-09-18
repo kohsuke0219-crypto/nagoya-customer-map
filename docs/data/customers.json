@@ -1,20 +1,21 @@
 {
-  "generated_at": "2026-09-17T17:02:52+09:00",
+  "generated_at": "2026-09-18T18:12:04+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 31,
+  "total": 33,
   "by_newspaper": {
     "新聞折込チラシ": 5,
     "通りすがり　看板見て": 1,
     "通りすがり": 11,
     "ネット検索": 5,
     "CM・テレビ": 2,
-    "ご紹介": 4,
+    "ご紹介": 5,
     "通りがかり": 2,
-    "再来店": 1
+    "再来店": 1,
+    "顧客": 1
   },
   "customers": [
     {
@@ -574,6 +575,42 @@
         "切手"
       ],
       "registered_at": "9/17/2026 17:01:57",
+      "precision": "address"
+    },
+    {
+      "id": "dc0ddd7c8257",
+      "loc_group": "cc8d96cec0",
+      "lat": 35.195811,
+      "lng": 136.999429,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "30代",
+      "newspaper": "顧客",
+      "visit_date": "9/18/2026",
+      "amount": "10万以下",
+      "categories": [
+        "貴金属",
+        "絵画"
+      ],
+      "registered_at": "9/18/2026 15:22:20",
+      "precision": "address"
+    },
+    {
+      "id": "5007bc5c74a0",
+      "loc_group": "387721c51d",
+      "lat": 35.203088,
+      "lng": 136.994291,
+      "area": "愛知県名古屋市守山区",
+      "gender": "女性",
+      "age_group": "50代",
+      "newspaper": "ご紹介",
+      "visit_date": "9/18/2026",
+      "amount": "30万以下",
+      "categories": [
+        "ブランド",
+        "金券"
+      ],
+      "registered_at": "9/18/2026 15:32:32",
       "precision": "address"
     }
   ]
