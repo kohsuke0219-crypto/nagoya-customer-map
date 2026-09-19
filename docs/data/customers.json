@@ -1,21 +1,21 @@
 {
-  "generated_at": "2026-09-18T22:39:59+09:00",
+  "generated_at": "2026-09-19T21:57:14+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 34,
+  "total": 36,
   "by_newspaper": {
     "新聞折込チラシ": 5,
     "通りすがり　看板見て": 1,
     "通りすがり": 11,
-    "ネット検索": 6,
+    "ネット検索": 7,
     "CM・テレビ": 2,
     "ご紹介": 5,
     "通りがかり": 2,
     "再来店": 1,
-    "顧客": 1
+    "顧客": 2
   },
   "customers": [
     {
@@ -628,6 +628,40 @@
         "貴金属"
       ],
       "registered_at": "9/18/2026 18:31:23",
+      "precision": "address"
+    },
+    {
+      "id": "f9012172b535",
+      "loc_group": "38ea11b2b8",
+      "lat": 35.212678,
+      "lng": 137.101443,
+      "area": "愛知県瀬戸市",
+      "gender": "男性",
+      "age_group": "20代",
+      "newspaper": "ネット検索",
+      "visit_date": "9/13/2026",
+      "amount": "10万以下",
+      "categories": [
+        "テレカ"
+      ],
+      "registered_at": "9/19/2026 19:23:21",
+      "precision": "address"
+    },
+    {
+      "id": "ad41f865ae46",
+      "loc_group": "52c54a11c9",
+      "lat": 35.197957,
+      "lng": 136.976116,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "30代",
+      "newspaper": "顧客",
+      "visit_date": "9/13/2026",
+      "amount": "10万以下",
+      "categories": [
+        "釣り具"
+      ],
+      "registered_at": "9/19/2026 19:25:11",
       "precision": "address"
     }
   ]
