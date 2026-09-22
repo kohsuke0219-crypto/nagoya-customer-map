@@ -1,21 +1,22 @@
 {
-  "generated_at": "2026-09-21T19:14:55+09:00",
+  "generated_at": "2026-09-22T21:46:34+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 38,
+  "total": 40,
   "by_newspaper": {
     "新聞折込チラシ": 5,
     "通りすがり　看板見て": 1,
     "通りすがり": 12,
-    "ネット検索": 7,
+    "ネット検索": 8,
     "CM・テレビ": 3,
     "ご紹介": 5,
     "通りがかり": 2,
     "再来店": 1,
-    "顧客": 2
+    "顧客": 2,
+    "近所だから": 1
   },
   "customers": [
     {
@@ -696,6 +697,41 @@
         "商品券"
       ],
       "registered_at": "9/21/2026 18:02:05",
+      "precision": "address"
+    },
+    {
+      "id": "0a4798b44de4",
+      "loc_group": "61d9b5df03",
+      "lat": 35.204214,
+      "lng": 137.009901,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "20代",
+      "newspaper": "ネット検索",
+      "visit_date": "9/18/2026",
+      "amount": "30万以下",
+      "categories": [
+        "貴金属"
+      ],
+      "registered_at": "9/22/2026 18:09:35",
+      "precision": "address"
+    },
+    {
+      "id": "2d87fab45e83",
+      "loc_group": "ff6e0c4564",
+      "lat": 35.179813,
+      "lng": 136.906051,
+      "area": "愛知県在所名古屋市守山区",
+      "gender": "男性",
+      "age_group": "20代",
+      "newspaper": "近所だから",
+      "visit_date": "9/22/2026",
+      "amount": "10万以下",
+      "categories": [
+        "ブランド",
+        "美容器具"
+      ],
+      "registered_at": "9/22/2026 18:11:34",
       "precision": "address"
     }
   ]
