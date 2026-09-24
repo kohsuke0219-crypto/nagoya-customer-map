@@ -1,0 +1,1065 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>守山大森店 配布マップ</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+:root{
+  color-scheme: light;
+  --A:#C8412F; --B:#E2872B; --C:#4E9AA8;
+  --ink:#1f2328; --sub:#5f6368; --faint:#9aa0a6; --line:#e6e8eb; --soft:#f5f6f8;
+  --bg:#ffffff; --hit:#FCE38A; --hit-ink:#5a4300;
+  --shadow:0 1px 2px rgba(60,64,67,.28),0 2px 8px 2px rgba(60,64,67,.14);
+  --panel-w:400px; --peek:132px;
+  --font:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",YuGothic,Meiryo,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#eef0f2;color:var(--ink);font-family:var(--font);-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+#map{position:fixed;inset:0}
+.print-only{display:none}
+
+/* ---------- 検索＋フィルタ ---------- */
+#topbar{position:absolute;top:12px;left:12px;width:var(--panel-w);z-index:6}
+.search{display:flex;align-items:center;height:48px;background:var(--bg);border-radius:24px;box-shadow:var(--shadow);padding:0 4px 0 16px;gap:8px}
+.search svg{flex:none;color:var(--sub)}
+.search input{flex:1;min-width:0;height:44px;border:0;outline:0;background:transparent;font:inherit;font-size:15px;color:var(--ink)}
+.search input::-webkit-search-cancel-button{display:none}
+.icon-btn{width:44px;height:44px;border:0;background:none;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:var(--sub);flex:none}
+.icon-btn:hover{background:var(--soft)}
+#suggest{list-style:none;margin:6px 0 0;padding:6px 0;background:var(--bg);border-radius:12px;box-shadow:var(--shadow);max-height:50vh;overflow:auto}
+#suggest button{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:6px 16px;border:0;background:none;text-align:left;cursor:pointer;font-size:14px}
+#suggest button:hover,#suggest button:focus-visible{background:var(--soft);outline:0}
+#suggest .empty{padding:12px 16px;font-size:13px;color:var(--sub)}
+#suggest .sub{margin-left:auto;font-size:12px;color:var(--sub)}
+.pills{display:flex;gap:5px;margin-top:6px;overflow-x:auto;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{flex:none;height:44px;padding:0;border:0;background:none;cursor:pointer}
+.pill>span{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:17px;background:var(--bg);box-shadow:var(--shadow);font-size:12px;font-weight:600;white-space:nowrap}
+.pill i{width:10px;height:10px;border-radius:50%;background:var(--c)}
+.pill small{font-weight:500;color:var(--sub)}
+.pill[aria-pressed="true"]>span{background:#1f2328;color:#fff}
+.pill[aria-pressed="true"] small{color:#c9ccd1}
+.pill[aria-pressed="true"] i{box-shadow:0 0 0 2px #fff}
+
+/* ---------- パネル（PC=左 / スマホ=ボトムシート） ---------- */
+#panel{position:absolute;top:118px;left:12px;bottom:12px;width:var(--panel-w);background:var(--bg);border-radius:12px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden;z-index:5}
+#sheetHead{flex:none;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+.handle{display:none}
+.ptitle{font-size:12px;color:var(--sub)}
+.psum{font-size:15px;font-weight:700;margin-top:2px}
+.psum b{font-size:18px}
+#panelBody{flex:1;min-height:0;display:flex;flex-direction:column}
+#card{flex:none;max-height:58%;overflow:auto;padding:14px 16px 14px;border-bottom:8px solid var(--soft)}
+#list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.notes-in-panel{display:none}
+
+/* 情報カード */
+.card-head{display:flex;gap:12px;align-items:flex-start}
+.card-head .num{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;box-shadow:0 0 0 3px #fff,0 1px 5px rgba(0,0,0,.35);margin-top:2px}
+.card-head h2{margin:0 0 5px;font-size:20px;line-height:1.3}
+.card-head .grow{flex:1;min-width:0}
+.lbadge{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:12px;font-size:12px;font-weight:700}
+.mai-big{display:flex;align-items:baseline;gap:6px;margin:14px 0 12px}
+.mai-big .k{font-size:12px;color:var(--sub);margin-right:4px}
+.mai-big b{font-size:44px;line-height:1;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.mai-big .u{font-size:16px;font-weight:700}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{background:var(--soft);border-radius:10px;padding:9px 12px}
+.tile.wide{grid-column:1/-1}
+.tile .k{font-size:11.5px;color:var(--sub)}
+.tile .v{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:1px}
+.tile .v small{font-size:12px;font-weight:600;margin-left:2px}
+.tile .s{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5}
+.tile.river .s{color:#1d5f96;font-weight:700}
+.tile.hit-on{background:var(--hit)}
+.tile.hit-on .k,.tile.hit-on .s{color:var(--hit-ink)}
+.tile.hit-off .v{color:var(--faint)}
+
+/* 一覧 */
+.grp-head{position:sticky;top:0;z-index:1;background:var(--bg);padding:12px 16px 8px;border-bottom:1px solid var(--line)}
+.grp-head .t{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px}
+.grp-head .t .sw{width:14px;height:14px;border-radius:4px}
+.grp-head .m{font-size:12px;color:var(--sub);margin-top:3px}
+.grp-head .m b{color:var(--ink)}
+.grp-head .d{font-size:11.5px;color:var(--sub);margin-top:2px}
+.row{display:grid;grid-template-columns:30px 1fr auto;gap:10px;align-items:center;width:100%;min-height:58px;padding:8px 16px 8px 13px;border:0;border-left:3px solid transparent;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer}
+.row:hover{background:var(--soft)}
+.row.active{background:#fff5e2;border-left-color:var(--c)}
+.row.flash{animation:flash .9s ease-out}
+@keyframes flash{0%{background:#ffd98a}100%{background:#fff5e2}}
+.row .nb{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.row .nm{display:block;font-weight:700;font-size:14.5px}
+.row .meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:3px;font-size:12px;color:var(--sub)}
+.chip{display:inline-block;padding:1px 6px;border-radius:6px;font-size:11px;font-weight:700;line-height:1.6}
+.chip.ratio{background:#eceef1;color:#3c4043}
+.chip.hit-on{background:var(--hit);color:var(--hit-ink)}
+.chip.hit-off{background:#f1f2f4;color:var(--faint);font-weight:500}
+.row .mai{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums;text-align:right}
+.row .mai small{font-size:11px;font-weight:600;margin-left:1px;color:var(--sub)}
+.grp[hidden]{display:none}
+
+/* 凡例 */
+#legend{position:absolute;top:12px;right:12px;width:250px;background:var(--bg);border-radius:12px;box-shadow:var(--shadow);z-index:4;font-size:12px;max-height:calc(100vh - 200px);overflow:auto}
+#legend summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:44px;padding:0 14px;font-weight:800;font-size:13px;cursor:pointer}
+#legend summary::-webkit-details-marker{display:none}
+#legend summary .chev{transition:none;color:var(--sub)}
+#legend[open] summary .chev{transform:rotate(180deg)}
+.lg{padding:0 14px 12px}
+.lg h4{margin:8px 0 4px;font-size:11px;color:var(--sub);font-weight:700}
+.lg .it{display:flex;align-items:center;gap:8px;padding:3px 0;line-height:1.35}
+.lg .it svg{flex:none}
+.lg .it .n{margin-left:auto;color:var(--sub);white-space:nowrap;font-variant-numeric:tabular-nums}
+.lg .it b{font-weight:800}
+.lg .desc{font-size:11px;color:var(--sub);margin:-1px 0 4px 26px;line-height:1.4}
+
+/* 右下操作 */
+#controls{position:absolute;right:12px;bottom:36px;display:flex;flex-direction:column;gap:10px;z-index:4}
+.cgroup{background:var(--bg);border-radius:10px;box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+.cgroup .icon-btn{border-radius:0;color:#3c4043}
+.cgroup .icon-btn+.icon-btn{border-top:1px solid var(--line)}
+.icon-btn:disabled{color:#c4c7cc;cursor:default;background:none}
+#compassIcon{transition:none}
+
+/* 注記（フッター） */
+#notes{position:absolute;left:calc(var(--panel-w) + 24px);right:72px;bottom:8px;z-index:3;background:rgba(255,255,255,.9);border-radius:8px;padding:6px 10px;font-size:10.5px;line-height:1.55;color:var(--sub);pointer-events:auto}
+.notes p{margin:0}
+.notes p+p{margin-top:2px}
+
+.maplibregl-ctrl-bottom-right{z-index:3}
+.maplibregl-popup-content{font-family:var(--font);border-radius:10px;padding:10px 32px 10px 12px;box-shadow:var(--shadow);font-size:12.5px;line-height:1.55}
+.maplibregl-popup-content b{font-size:14px}
+.maplibregl-popup-close-button{width:32px;height:32px;font-size:18px}
+.pop-sub{color:var(--sub)}
+.geo-dot{width:16px;height:16px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 6px rgba(26,115,232,.2),0 1px 3px rgba(0,0,0,.4)}
+
+/* ---------- スマホ ---------- */
+@media (max-width:767px){
+  #topbar{left:8px;right:8px;top:8px;width:auto}
+  .pill>span{padding:0 11px}
+  .pill .long,.pill small{display:none}
+  #panel{top:auto;left:0;right:0;bottom:0;width:auto;height:calc(100vh - 64px);height:calc(100dvh - 64px);border-radius:16px 16px 0 0;box-shadow:0 -2px 12px rgba(60,64,67,.22);transform:translateY(calc(100vh - 64px - var(--peek)));transition:transform .28s cubic-bezier(.2,.8,.2,1);will-change:transform}
+  #panel.dragging{transition:none}
+  #sheetHead{touch-action:none;cursor:grab;padding:6px 16px 10px}
+  .handle{display:block;width:40px;height:5px;border-radius:3px;background:#d4d7dc;margin:2px auto 8px}
+  #panelBody{display:block;overflow:auto;overscroll-behavior:contain}
+  #card{max-height:none;overflow:visible}
+  #list{overflow:visible}
+  .notes-in-panel{display:block;padding:14px 16px 28px;font-size:10.5px;line-height:1.6;color:var(--sub)}
+  #notes{display:none}
+  #legend{top:112px;right:8px;width:auto;max-width:calc(100vw - 16px);max-height:calc(100vh - 112px - var(--peek) - 16px)}
+  #legend:not([open]){width:auto}
+  #legend[open]{width:260px}
+  #controls{right:8px;bottom:calc(var(--peek) + 40px)}
+  .maplibregl-ctrl-bottom-right{bottom:var(--peek)}
+}
+
+/* ---------- 印刷（A3横） ---------- */
+@media print{
+  @page{size:A3 landscape;margin:8mm}
+  html,body{height:auto;overflow:visible;background:#fff}
+  #topbar,#panel,#controls,.maplibregl-ctrl-bottom-right,.maplibregl-popup{display:none!important}
+  .print-only{display:block}
+  #printTitle{font-size:16pt;font-weight:800;margin:0 0 3mm}
+  #printTitle span{font-size:11pt;font-weight:600;color:#444;margin-left:4mm}
+  #map{position:relative;inset:auto;width:404mm;height:250mm;border:1px solid #ccc}
+  #legend{display:block!important;top:12mm;right:3mm;width:78mm;max-height:none;overflow:visible;box-shadow:none;border:1px solid #bbb}
+  #legend summary .chev{display:none}
+  #legend .lg{display:block!important}
+  #notes{position:static;margin-top:2mm;padding:0;background:none;font-size:8pt}
+  #printList{width:100%;border-collapse:collapse;font-size:9pt;margin-top:2mm}
+  #printList td{padding:1px 3px;border-bottom:1px solid #eee}
+  #printList td.r{text-align:right;font-variant-numeric:tabular-nums}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+<div id="printTitle" class="print-only">買取大吉 守山大森店 ポスティング配布計画<span id="printSum"></span></div>
+<div id="map" role="region" aria-label="配布地図"></div>
+
+<div id="topbar">
+  <div class="search" role="search">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.8l-.3-.3A6.5 6.5 0 1 0 9.5 16a6.5 6.5 0 0 0 4.2-1.6l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+    <input id="q" type="search" placeholder="地区名で検索（例：大森、小幡）" autocomplete="off" enterkeyhint="search" aria-label="地区名で検索" aria-controls="suggest">
+    <button id="qClear" class="icon-btn" type="button" aria-label="検索をクリア" hidden>
+      <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6z"/></svg>
+    </button>
+  </div>
+  <ul id="suggest" role="listbox" hidden></ul>
+  <div class="pills" id="pills" role="group" aria-label="層で絞り込み"></div>
+</div>
+
+<aside id="panel" aria-label="配布地区一覧" data-state="peek">
+  <div id="sheetHead">
+    <div class="handle" aria-hidden="true"></div>
+    <div class="ptitle">買取大吉 守山大森店 ポスティング配布計画</div>
+    <div class="psum" id="psum"></div>
+  </div>
+  <div id="panelBody">
+    <section id="card" aria-live="polite" hidden></section>
+    <div id="list"></div>
+    <div class="notes notes-in-panel"></div>
+  </div>
+</aside>
+
+<details id="legend" open>
+  <summary>凡例 <svg class="chev" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.4 8.6 12 13.2l4.6-4.6L18 10l-6 6-6-6z"/></svg></summary>
+  <div class="lg" id="legendBody"></div>
+</details>
+
+<div id="controls">
+  <div class="cgroup">
+    <button class="icon-btn" id="zIn" type="button" aria-label="拡大"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg></button>
+    <button class="icon-btn" id="zOut" type="button" aria-label="縮小"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M19 13H5v-2h14z"/></svg></button>
+  </div>
+  <div class="cgroup">
+    <button class="icon-btn" id="north" type="button" aria-label="方位をリセット（北を上に）"><svg id="compassIcon" width="22" height="22" viewBox="0 0 24 24"><path fill="#C8412F" d="M12 2 7.5 12h9z"/><path fill="#9aa0a6" d="M12 22l4.5-10h-9z"/></svg></button>
+  </div>
+  <div class="cgroup">
+    <button class="icon-btn" id="custBtn" type="button" aria-pressed="true" aria-label="来店客を表示／非表示"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7" fill="#D81B27" stroke="#fff" stroke-width="2"/></svg></button>
+  </div>
+  <div class="cgroup">
+    <button class="icon-btn" id="geo" type="button" aria-label="現在地を表示"><svg width="22" height="22" viewBox="0 0 24 24"><path fill="currentColor" d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm8.9 3A9 9 0 0 0 13 3.1V1h-2v2.1A9 9 0 0 0 3.1 11H1v2h2.1a9 9 0 0 0 7.9 7.9V23h2v-2.1a9 9 0 0 0 7.9-7.9H23v-2h-2.1zM12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14z"/></svg></button>
+  </div>
+</div>
+
+<footer id="notes" class="notes"></footer>
+
+<script type="application/json" id="mapdata">{"store":{"lat":35.2019013,"lng":136.9962829,"name":"買取大吉 守山大森店","addr":"名古屋市守山区大森1-2511 ケンシンビル1階西"},"rivals":[{"name":"おたからや小幡店","lat":35.202931,"lng":136.977844,"brand":"おたからや","km":1.53},{"name":"イオン名古屋東店","lat":35.194262,"lng":136.990525,"brand":"大吉","km":1.04},{"name":"ユーストア印場店","lat":35.20653,"lng":137.013104,"brand":"大吉","km":1.72},{"name":"ピアゴパワー守山店","lat":35.199519,"lng":136.962847,"brand":"大吉","km":2.92},{"name":"守山青山台店","lat":35.229325,"lng":137.015779,"brand":"大吉","km":3.49},{"name":"名東富が丘店","lat":35.186687,"lng":137.020095,"brand":"大吉","km":2.94},{"name":"アピタパワー新守山店","lat":35.202576,"lng":136.94472,"brand":"大吉","km":4.54},{"name":"守山瀬古東店","lat":35.208361,"lng":136.942773,"brand":"大吉","km":4.75},{"name":"カネスエ中井田店","lat":35.214009,"lng":137.053336,"brand":"大吉","km":5.48}],"rivers":[{"name":"矢田川","pts":[[35.2039,137.03222],[35.20561,137.02979],[35.20603,137.02701],[35.20567,137.02482],[35.2023,137.01451],[35.20081,137.00355],[35.19861,136.99827],[35.19687,136.99036],[35.19312,136.9845],[35.19224,136.98256],[35.19029,136.97376],[35.19104,136.96144],[35.19346,136.95279]]},{"name":"庄内川","pts":[[35.23681,136.98947],[35.23434,136.98957],[35.23265,136.99033],[35.23099,136.99048],[35.22858,136.99026],[35.22723,136.98969],[35.2255,136.98591],[35.22458,136.98041],[35.22085,136.97554],[35.21854,136.9736],[35.21741,136.972],[35.21647,136.96914],[35.21632,136.96716],[35.21654,136.96447],[35.21715,136.96337],[35.21746,136.96146],[35.21694,136.9563],[35.21734,136.95253]]},{"name":"香流川","pts":[[35.18868,137.03203],[35.18953,137.02944],[35.19107,137.02643],[35.1913,137.02381],[35.19069,137.02056],[35.19118,137.01679],[35.19042,137.01317],[35.19081,137.01015],[35.19002,137.00753],[35.19071,137.00387],[35.19038,137.0024],[35.18862,136.99928],[35.18913,136.99209],[35.18744,136.98522],[35.18828,136.97936],[35.19027,136.97328]]},{"name":"白沢川","pts":[[35.21472,136.98166],[35.21405,136.98109],[35.21392,136.98005],[35.21302,136.97866],[35.21397,136.97527],[35.21435,136.97487],[35.21635,136.97485],[35.21769,136.97406],[35.21824,136.97321]]}],"bridges":[{"name":"千代田山之端線","lat":35.19112,"lng":136.97014},{"name":"小幡西山線","lat":35.19368,"lng":136.98533},{"name":"市道（大森西）","lat":35.19801,"lng":136.9907},{"name":"国道302号","lat":35.19794,"lng":136.99488},{"name":"名古屋中環状線","lat":35.19964,"lng":137.00095},{"name":"市道（天子田東）","lat":35.20192,"lng":137.00644}],"rail":{"name":"名鉄瀬戸線","pts":[[35.19511,136.95154],[35.19524,136.95178],[35.19532,136.95197],[35.19537,136.95218],[35.19539,136.95237],[35.1954,136.95255],[35.19538,136.9532],[35.19537,136.95363],[35.19537,136.95386],[35.1954,136.95406],[35.19547,136.95429],[35.19574,136.95505],[35.19589,136.95545],[35.19604,136.95613],[35.19611,136.95658],[35.19613,136.95675],[35.19629,136.95804],[35.1965,136.95961],[35.19707,136.96372],[35.19712,136.96412],[35.19721,136.96459],[35.19733,136.96515],[35.19784,136.96752],[35.19839,136.97012],[35.19848,136.9705],[35.19858,136.97088],[35.19869,136.97122],[35.19879,136.97152],[35.19905,136.97216],[35.19954,136.97341],[35.19972,136.97391],[35.19981,136.97421],[35.1999,136.97456],[35.20011,136.97542],[35.20046,136.9769],[35.20084,136.97851],[35.2013,136.98043],[35.20143,136.98084],[35.2022,136.98282],[35.20232,136.98311],[35.20245,136.98334],[35.20262,136.98359],[35.20286,136.98384],[35.2034,136.98435],[35.20357,136.98457],[35.20373,136.98485],[35.20391,136.98526],[35.20534,136.98865],[35.20655,136.99153],[35.20668,136.99189],[35.20676,136.99218],[35.20681,136.99249],[35.20691,136.99363],[35.20701,136.9949],[35.20703,136.9953],[35.20702,136.9957],[35.20696,136.9965],[35.20696,136.99698],[35.20698,136.99719],[35.20703,136.99743],[35.20712,136.99768],[35.20724,136.99791],[35.20738,136.99812],[35.20831,136.99915],[35.20861,136.9995],[35.20888,136.99982],[35.20903,137.00009],[35.2091,137.00025],[35.20919,137.00055],[35.20931,137.00093],[35.2094,137.00139],[35.20947,137.00203],[35.20973,137.00612],[35.2098,137.00681],[35.20991,137.00724],[35.21039,137.00881],[35.21112,137.01126],[35.21142,137.01227],[35.21168,137.01314],[35.2119,137.01379],[35.21227,137.01475],[35.21261,137.01559],[35.21329,137.01733],[35.21395,137.019],[35.21436,137.01999],[35.21549,137.02284],[35.21589,137.02392],[35.21613,137.02476],[35.21634,137.02585],[35.2165,137.02685],[35.21741,137.03215],[35.21754,137.03333],[35.2175,137.03373],[35.21736,137.03444],[35.21688,137.03622]]},"stations":[{"name":"大森・金城学院前","lat":35.206976,"lng":136.9965067,"line":"名鉄瀬戸線","km":0.47},{"name":"喜多山","lat":35.2053557,"lng":136.9886403,"line":"名鉄瀬戸線","km":0.6},{"name":"小幡","lat":35.2001171,"lng":136.9754154,"line":"名鉄瀬戸線","km":1.78},{"name":"瓢箪山","lat":35.1972659,"lng":136.9647543,"line":"名鉄瀬戸線","km":2.79},{"name":"守山自衛隊前","lat":35.1962692,"lng":136.9576637,"line":"名鉄瀬戸線","km":3.44},{"name":"印場","lat":35.2111078,"lng":137.0112719,"line":"名鉄瀬戸線","km":1.76},{"name":"旭前","lat":35.2143478,"lng":137.0199924,"line":"名鉄瀬戸線","km":2.62},{"name":"新守山","lat":35.2071937,"lng":136.9508525,"line":"JR中央本線","km":4.01}],"rings":[0.65,1.3,1.8],"areas":[{"name":"元郷一丁目","layer":"A","layerName":"絶対防衛圏","mai":425,"km":0.18,"lat":35.200347,"lng":136.996692,"own":93,"sec":3.7,"ratio":24.97,"rival":"イオン名古屋東店","setai":672,"n40":558,"n80":98,"mochi":62,"river":"","bridge":"","color":"#C8412F","poly":[[35.198821,136.995343],[35.198624,136.994209],[35.200534,136.993135],[35.202203,136.998161],[35.201753,136.998609],[35.201164,136.999769],[35.200266,137.000466],[35.200052,136.999777],[35.199522,136.99857],[35.199187,136.99728],[35.198821,136.995343]],"no":1},{"name":"大森一丁目","layer":"A","layerName":"絶対防衛圏","mai":339,"km":0.21,"lat":35.203121,"lng":136.99454,"own":91.8,"sec":3.4,"ratio":27.03,"rival":"イオン名古屋東店","setai":607,"n40":470,"n80":77,"mochi":56,"river":"","bridge":"","color":"#C8412F","poly":[[35.200534,136.993135],[35.200509,136.993062],[35.203951,136.99114],[35.204041,136.990995],[35.204374,136.991106],[35.205551,136.996271],[35.20494,136.996461],[35.20493,136.996414],[35.203556,136.997458],[35.202203,136.998161],[35.200534,136.993135]],"no":2},{"name":"薮田町","layer":"A","layerName":"絶対防衛圏","mai":124,"km":0.37,"lat":35.199469,"lng":136.993497,"own":70.1,"sec":18.6,"ratio":3.76,"rival":"イオン名古屋東店","setai":222,"n40":null,"n80":null,"mochi":59,"river":"","bridge":"","color":"#C8412F","poly":[[35.200789,136.992904],[35.200509,136.993062],[35.200534,136.993135],[35.198624,136.994209],[35.199187,136.99728],[35.199522,136.99857],[35.200052,136.999777],[35.200266,137.000466],[35.199754,137.00086],[35.198635,136.998325],[35.198561,136.997903],[35.198385,136.997338],[35.198027,136.995241],[35.197466,136.992783],[35.197502,136.992764],[35.197196,136.991334],[35.196752,136.990315],[35.197275,136.990313],[35.197322,136.990382],[35.197475,136.990393],[35.198169,136.990855],[35.199029,136.991002],[35.199776,136.991001],[35.202191,136.990805],[35.203556,136.991001],[35.204041,136.990995],[35.203951,136.99114],[35.200789,136.992904]],"no":3},{"name":"大森四丁目","layer":"A","layerName":"絶対防衛圏","mai":326,"km":0.4,"lat":35.20445,"lng":136.999462,"own":77,"sec":7.9,"ratio":9.71,"rival":"ユーストア印場店","setai":742,"n40":391,"n80":50,"mochi":44,"river":"","bridge":"","color":"#C8412F","poly":[[35.202665,136.999552],[35.202198,136.998168],[35.202221,136.998131],[35.2028,136.997842],[35.202817,136.997869],[35.203556,136.997458],[35.20493,136.996414],[35.20494,136.996461],[35.205551,136.996271],[35.205639,136.997321],[35.20592,136.999004],[35.206151,136.999994],[35.206617,137.001282],[35.203628,137.002404],[35.202665,136.999552]],"no":4},{"name":"元郷二丁目","layer":"A","layerName":"絶対防衛圏","mai":176,"km":0.45,"lat":35.201683,"lng":137.00123,"own":71.5,"sec":10,"ratio":7.18,"rival":"ユーストア印場店","setai":266,"n40":289,"n80":47,"mochi":72,"river":"","bridge":"","color":"#C8412F","poly":[[35.200088,137.001693],[35.199761,137.000855],[35.201164,136.999769],[35.201753,136.998609],[35.202198,136.998168],[35.203628,137.002404],[35.200561,137.003557],[35.200163,137.002216],[35.200088,137.001693]],"no":5},{"name":"大森三丁目","layer":"A","layerName":"絶対防衛圏","mai":144,"km":0.62,"lat":35.207032,"lng":136.998927,"own":61,"sec":14.1,"ratio":4.34,"rival":"ユーストア印場店","setai":340,"n40":191,"n80":41,"mochi":50,"river":"","bridge":"","color":"#C8412F","poly":[[35.208114,137.00087],[35.206617,137.001282],[35.206151,136.999994],[35.20592,136.999004],[35.205639,136.997321],[35.205551,136.996271],[35.206079,136.996145],[35.206623,136.996118],[35.207016,136.996165],[35.207006,136.997162],[35.207223,136.997848],[35.208665,136.99951],[35.208926,136.999916],[35.209212,137.000575],[35.208114,137.00087]],"no":6},{"name":"大森二丁目","layer":"A","layerName":"絶対防衛圏","mai":262,"km":0.73,"lat":35.208158,"lng":136.993719,"own":54.2,"sec":12.1,"ratio":4.49,"rival":"おたからや小幡店","setai":485,"n40":367,"n80":57,"mochi":57,"river":"","bridge":"","color":"#C8412F","poly":[[35.204456,136.991496],[35.204381,136.991147],[35.204637,136.991271],[35.205043,136.991669],[35.205423,136.992302],[35.20598,136.992172],[35.206476,136.991872],[35.206912,136.991967],[35.207153,136.992403],[35.20738,136.992465],[35.207495,136.990781],[35.208283,136.990948],[35.208848,136.990867],[35.209353,136.990901],[35.210423,136.992248],[35.210433,136.992386],[35.21062,136.992743],[35.211567,136.993929],[35.212968,136.995116],[35.212977,136.995537],[35.212088,136.995395],[35.211519,136.995087],[35.210513,136.99532],[35.209496,136.995278],[35.208677,136.995634],[35.20825,136.996138],[35.208096,136.99618],[35.207267,136.99618],[35.207028,136.996226],[35.207016,136.996165],[35.206623,136.996118],[35.206079,136.996145],[35.205551,136.996271],[35.204456,136.991496]],"no":7},{"name":"喜多山南","layer":"B","layerName":"射程圏","mai":298,"km":0.61,"lat":35.202051,"lng":136.989604,"own":48.8,"sec":23.4,"ratio":2.09,"rival":"イオン名古屋東店","setai":559,"n40":450,"n80":56,"mochi":57,"river":"","bridge":"","color":"#E2872B","poly":[[35.199889,136.990975],[35.199418,136.989126],[35.20199,136.988136],[35.20378,136.987799],[35.204374,136.991106],[35.204041,136.990995],[35.203556,136.991001],[35.202191,136.990805],[35.199889,136.990975]],"no":8},{"name":"喜多山一丁目","layer":"B","layerName":"射程圏","mai":121,"km":0.67,"lat":35.205086,"lng":136.989991,"own":50.6,"sec":17.9,"ratio":2.82,"rival":"おたからや小幡店","setai":201,"n40":166,"n80":28,"mochi":56,"river":"","bridge":"","color":"#E2872B","poly":[[35.203995,136.988957],[35.20378,136.987799],[35.204809,136.98742],[35.206715,136.99192],[35.206476,136.991872],[35.20598,136.992172],[35.205423,136.992302],[35.205043,136.991669],[35.204637,136.991271],[35.204381,136.991147],[35.203995,136.988957]],"no":9},{"name":"弁天が丘","layer":"B","layerName":"射程圏","mai":267,"km":0.94,"lat":35.210282,"lng":136.997344,"own":44.5,"sec":17.5,"ratio":2.53,"rival":"ユーストア印場店","setai":438,"n40":318,"n80":74,"mochi":61,"river":"","bridge":"","color":"#E2872B","poly":[[35.20952,136.99956],[35.209242,136.999557],[35.209546,137.000258],[35.209736,137.000922],[35.209906,137.000942],[35.210018,137.001023],[35.210115,137.001498],[35.210235,137.001703],[35.210726,137.0018],[35.210865,137.001923],[35.211151,137.002455],[35.210989,137.0026],[35.210887,137.002476],[35.210098,137.001901],[35.209958,137.001688],[35.20971,137.001465],[35.209466,137.00134],[35.209261,137.000518],[35.209197,137.000536],[35.209118,137.000305],[35.208776,136.999672],[35.208443,136.999231],[35.207794,136.99853],[35.207814,136.99857],[35.207223,136.997848],[35.207006,136.997162],[35.207028,136.996226],[35.207267,136.99618],[35.208096,136.99618],[35.20825,136.996138],[35.208677,136.995634],[35.209496,136.995278],[35.210513,136.99532],[35.211519,136.995087],[35.212088,136.995395],[35.212985,136.995569],[35.214622,136.995452],[35.214658,136.995581],[35.214523,136.996014],[35.214286,136.996223],[35.214006,136.99627],[35.213619,136.996525],[35.213473,136.996819],[35.213027,136.997285],[35.212458,136.997546],[35.212349,136.997541],[35.211996,136.998261],[35.211596,136.998514],[35.211277,136.998825],[35.210868,136.998941],[35.210489,136.998884],[35.20952,136.99956]],"no":10},{"name":"翠松園二丁目","layer":"B","layerName":"射程圏","mai":302,"km":1.21,"lat":35.212043,"lng":136.991588,"own":34.4,"sec":19.3,"ratio":1.78,"rival":"おたからや小幡店","setai":308,"n40":580,"n80":99,"mochi":97,"river":"","bridge":"","color":"#E2872B","poly":[[35.214263,136.99002],[35.214049,136.99049],[35.213116,136.9918],[35.213654,136.992946],[35.213144,136.994911],[35.21323,136.995534],[35.212985,136.995569],[35.212968,136.995116],[35.211567,136.993929],[35.21062,136.992743],[35.210433,136.992386],[35.210423,136.992248],[35.209353,136.990901],[35.208848,136.990867],[35.209141,136.990635],[35.210232,136.98995],[35.210992,136.989865],[35.211769,136.989604],[35.212274,136.989136],[35.212992,136.988578],[35.213171,136.988858],[35.213419,136.989031],[35.213558,136.989045],[35.213558,136.988967],[35.213866,136.988852],[35.213927,136.989095],[35.213765,136.989145],[35.213954,136.98974],[35.214263,136.99002]],"no":11},{"name":"翠松園三丁目","layer":"B","layerName":"射程圏","mai":199,"km":1.43,"lat":35.214536,"lng":136.993359,"own":29.8,"sec":16.7,"ratio":1.79,"rival":"おたからや小幡店","setai":202,"n40":365,"n80":61,"mochi":98,"river":"","bridge":"","color":"#E2872B","poly":[[35.214622,136.995452],[35.21323,136.995534],[35.213144,136.994911],[35.213654,136.992946],[35.213116,136.9918],[35.214049,136.99049],[35.214263,136.990019],[35.21456,136.990491],[35.214636,136.990747],[35.215468,136.992429],[35.216353,136.99487],[35.216141,136.994984],[35.215811,136.995332],[35.215312,136.995455],[35.214622,136.995452]],"no":12},{"name":"喜多山二丁目","layer":"C","layerName":"テスト枠","mai":266,"km":0.87,"lat":35.206985,"lng":136.989019,"own":40.2,"sec":24.6,"ratio":1.63,"rival":"おたからや小幡店","setai":661,"n40":310,"n80":32,"mochi":40,"river":"","bridge":"","color":"#4E9AA8","poly":[[35.208751,136.988392],[35.208343,136.99047],[35.208432,136.990919],[35.208283,136.990948],[35.207495,136.990781],[35.20738,136.992465],[35.207153,136.992403],[35.206912,136.991967],[35.206715,136.99192],[35.204809,136.98742],[35.205137,136.98729],[35.20791,136.986584],[35.20808,136.987474],[35.208289,136.987427],[35.208262,136.987632],[35.208329,136.98794],[35.208442,136.988017],[35.208597,136.988013],[35.208672,136.988116],[35.208751,136.988392]],"no":13},{"name":"向台一丁目","layer":"C","layerName":"テスト枠","mai":331,"km":0.95,"lat":35.195558,"lng":137.000579,"own":34.5,"sec":36.2,"ratio":0.95,"rival":"イオン名古屋東店","setai":478,"n40":520,"n80":90,"mochi":70,"river":"矢田川","bridge":"名古屋中環状線","color":"#4E9AA8","poly":[[35.195586,137.0033],[35.194901,137.003572],[35.194175,137.000547],[35.194447,136.999926],[35.194608,136.998985],[35.194851,136.998745],[35.195029,136.998707],[35.195013,136.998442],[35.195498,136.997888],[35.195406,136.99787],[35.195189,136.997074],[35.19503,136.996964],[35.194936,136.996729],[35.194728,136.996424],[35.195411,136.996052],[35.197189,137.002662],[35.195586,137.0033]],"no":14},{"name":"茶臼前","layer":"C","layerName":"テスト枠","mai":389,"km":1.03,"lat":35.205813,"lng":136.985978,"own":25.6,"sec":42,"ratio":0.61,"rival":"おたからや小幡店","setai":676,"n40":520,"n80":85,"mochi":58,"river":"","bridge":"","color":"#4E9AA8","poly":[[35.20791,136.986584],[35.205137,136.98729],[35.20378,136.987799],[35.203298,136.985318],[35.207296,136.984368],[35.207518,136.98445],[35.208221,136.984895],[35.207903,136.985652],[35.208068,136.985677],[35.208299,136.986453],[35.208337,136.987126],[35.208289,136.987427],[35.20808,136.987474],[35.20791,136.986584]],"no":15},{"name":"小幡南二丁目","layer":"C","layerName":"テスト枠","mai":175,"km":1.62,"lat":35.19914,"lng":136.978823,"own":5.3,"sec":74.6,"ratio":0.07,"rival":"おたからや小幡店","setai":472,"n40":232,"n80":29,"mochi":43,"river":"","bridge":"","color":"#4E9AA8","poly":[[35.19702,136.979971],[35.196713,136.978813],[35.200303,136.97679],[35.200976,136.976468],[35.201627,136.978988],[35.198642,136.980149],[35.198559,136.980348],[35.197448,136.981598],[35.19702,136.979971]],"no":16},{"name":"小幡南一丁目","layer":"C","layerName":"テスト枠","mai":649,"km":1.88,"lat":35.198346,"lng":136.976061,"own":5.3,"sec":65.4,"ratio":0.08,"rival":"おたからや小幡店","setai":1030,"n40":972,"n80":93,"mochi":63,"river":"","bridge":"","color":"#4E9AA8","poly":[[35.196193,136.976864],[35.19579,136.97533],[35.199183,136.973933],[35.200226,136.973617],[35.200976,136.976468],[35.200303,136.97679],[35.196713,136.978813],[35.196193,136.976864]],"no":17}],"meta":{"yadaKm":0.4,"updated":"2026-09-24","method":"sym","visits":"来店客マップ（nagoya-customer-map）の公開データを地図読み込み時に取得"}}</script>
+<script>
+(() => {
+'use strict';
+const D = JSON.parse(document.getElementById('mapdata').textContent);
+
+/* ---------- 定数・ユーティリティ ---------- */
+const LOCAL_FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",YuGothic,Meiryo,sans-serif';
+const F_REG = ['Noto Sans Regular'], F_BOLD = ['Noto Sans Bold'];
+const LAYERS = ['A', 'B', 'C'];
+// 層の意味（凡例・一覧見出し用）。色と層名は mapdata.json から取る
+const L = {
+  A: { desc: '自店シェアが2位の3倍以上。毎回必ず撒く', ink: '#9E2F20', tint: '#F8E3E0' },
+  B: { desc: '2位の1.73〜3倍。毎回撒く', ink: '#8A4A0C', tint: '#FBEBDA' },
+  C: { desc: 'シェアは劣勢だが実来店あり。反応を見る', ink: '#2B646E', tint: '#E0EFF1' },
+};
+LAYERS.forEach(k => {
+  const items = D.areas.filter(a => a.layer === k);
+  Object.assign(L[k], {
+    color: items[0].color, name: items[0].layerName, count: items.length,
+    mai: items.reduce((s, a) => s + a.mai, 0), hit: 0,
+  });
+});
+const RIVAL_COLOR = { '大吉': '#5A3FA0', 'おたからや': '#B4306E' };
+const VISIT_COLOR = '#D81B27';
+// 来店客データ（来店客マップと同じ元データ。読めない場合はECS集計の赤ピンを使う）
+const CUSTOMERS_URL = 'https://kohsuke0219-crypto.github.io/nagoya-customer-map/data/customers.json';
+const SRC_COLOR = {
+  '新聞折込チラシ': '#D81B27', 'ネット検索': '#1E88A8', '通りすがり': '#7A8894', '通りがかり': '#4A5A68',
+  '通りすがり　看板見て': '#46A0C8', 'ご紹介': '#B4306E', 'CM・テレビ': '#5A3FA0', '顧客': '#2E7D4F',
+  '再来店': '#67A83E', '近所だから': '#E2872B', 'その他': '#9aa0a6',
+};
+const srcColor = s => SRC_COLOR[s] || SRC_COLOR['その他'];
+let CUST = [];      // {lat,lng,src,age,amount,date}（座標は約200mに丸め済み）
+let custByArea = {}; // 地区番号 → {total, bySrc}
+const BRAND_LABEL = { '大吉': '買取大吉', 'おたからや': 'おたからや' };
+const FOCUS_RIVAL = 'おたからや小幡店';
+const byNo = new Map(D.areas.map(a => [a.no, a]));
+const fmt = n => Number(n).toLocaleString('ja-JP');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ll = p => [p[1], p[0]];
+const $ = id => document.getElementById(id);
+const mq = matchMedia('(max-width:767px)');
+const isMobile = () => mq.matches;
+const PEEK = 132;
+let sheetState = 'peek';
+// ピンの表示状態（簡易地図の描画が先に走るため、ここで初期化しておく）
+let visitsOn = false, custOn = true;
+
+function kmBetween(a, b) {
+  const r = Math.PI / 180, dLat = (b[1] - a[1]) * r, dLng = (b[0] - a[0]) * r;
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(s));
+}
+const storeLL = [D.store.lng, D.store.lat];
+
+// 地区ピンの表示位置。代表点が店舗の星と重なる地区（①大森一丁目）だけ、
+// 代表点と「店舗から最も遠い頂点」の中点に置いて星と番号が重ならないようにする
+function pinPos(a) {
+  const c = [a.lng, a.lat];
+  if (kmBetween(c, storeLL) > 0.1) return c;
+  let far = c, fd = -1;
+  a.poly.forEach(p => { const v = ll(p), d = kmBetween(v, storeLL); if (d > fd) { fd = d; far = v; } });
+  return [(c[0] + far[0]) / 2, (c[1] + far[1]) / 2];
+}
+const pinByNo = new Map(D.areas.map(a => [a.no, pinPos(a)]));
+
+function circle(center, rKm, n = 128) {
+  const [lng, lat] = center, dLat = rKm / 110.574, dLng = rKm / (111.320 * Math.cos(lat * Math.PI / 180));
+  const pts = [];
+  for (let i = 0; i <= n; i++) { const t = i / n * 2 * Math.PI; pts.push([lng + dLng * Math.sin(t), lat + dLat * Math.cos(t)]); }
+  return pts;
+}
+
+/* ---------- GeoJSON ---------- */
+const fc = features => ({ type: 'FeatureCollection', features });
+const point = (coord, props, id) => ({ type: 'Feature', id, properties: props, geometry: { type: 'Point', coordinates: coord } });
+const line = (coords, props, id) => ({ type: 'Feature', id, properties: props, geometry: { type: 'LineString', coordinates: coords } });
+
+const G = {
+  areas: fc(D.areas.map(a => {
+    const ring = a.poly.map(ll); ring.push(ring[0]);
+    return { type: 'Feature', id: a.no, properties: { no: a.no, name: a.name, layer: a.layer, color: a.color }, geometry: { type: 'Polygon', coordinates: [ring] } };
+  })),
+  pins: fc(D.areas.map(a => point(pinByNo.get(a.no), { no: a.no, name: a.name, layer: a.layer, maiText: fmt(a.mai) + '枚' }, a.no))),
+  store: fc([point(storeLL, { name: D.store.name })]),
+  rivals: fc(D.rivals.map((r, i) => point([r.lng, r.lat], {
+    idx: i, name: r.name, brand: r.brand, kind: r.brand === 'おたからや' ? 'otakara' : 'daikichi',
+    focus: r.name === FOCUS_RIVAL, color: RIVAL_COLOR[r.brand] || '#555',
+  }, i + 1))),
+  rivers: fc(D.rivers.map((r, i) => line(r.pts.map(ll), { name: r.name, main: r.name === '矢田川' }, i + 1))),
+  bridges: fc(D.bridges.map((b, i) => point([b.lng, b.lat], { idx: i, name: b.name }, i + 1))),
+  rail: fc([line(D.rail.pts.map(ll), { name: D.rail.name }, 1)]),
+  stations: fc(D.stations.map((s, i) => point([s.lng, s.lat], { idx: i, name: s.name }, i + 1))),
+  rings: fc(D.rings.map((r, i) => line(circle(storeLL, r), { r }, i + 1))),
+  customers: fc([]),
+  // 来店客（町丁目の代表点。同じ町の複数件は重ならないよう少しずらす）
+  visits: fc((D.visits || []).flatMap((v, i) => Array.from({ length: v.n }, (_, j) => {
+    const t = j / Math.max(1, v.n) * 2 * Math.PI, r = v.n > 1 ? 0.00025 : 0;
+    return point([v.lng + r * Math.sin(t) * 1.22, v.lat + r * Math.cos(t)], { town: v.town, n: v.n }, i * 100 + j + 1);
+  }))),
+  ringLabels: fc(D.rings.map((r, i) => {
+    const dLng = r / (111.320 * Math.cos(storeLL[1] * Math.PI / 180));
+    return point([storeLL[0] + dLng, storeLL[1]], { label: r + 'km' }, i + 1); // 真東の円周上
+  })),
+};
+
+const areaBounds = (() => {
+  const xs = [], ys = [];
+  D.areas.forEach(a => a.poly.forEach(p => { ys.push(p[0]); xs.push(p[1]); }));
+  return [[Math.min(...xs), Math.min(...ys)], [Math.max(...xs), Math.max(...ys)]];
+})();
+
+/* ---------- 画面のすき間計算 ---------- */
+const topbar = $('topbar'), panel = $('panel'), panelBody = $('panelBody'), list = $('list'), card = $('card');
+function occluded() {
+  // 地図上でUIに隠れていない領域 {left, top, right, bottom}（px）
+  const W = innerWidth, H = innerHeight;
+  if (isMobile()) {
+    const top = topbar.getBoundingClientRect().bottom;
+    const sheetTop = H - sheetVisible(sheetState);
+    return { left: 0, top, right: W, bottom: sheetTop };
+  }
+  return { left: panel.getBoundingClientRect().right, top: 0, right: W, bottom: H };
+}
+function fitPadding() {
+  if (isMobile()) {
+    const o = occluded();
+    return { top: Math.round(o.top) + 16, bottom: Math.round(innerHeight - o.bottom) + 16, left: 16, right: 64 }; // 右は操作ボタン分
+  }
+  const left = Math.round(panel.getBoundingClientRect().right);
+  const lg = $('legend').getBoundingClientRect();
+  return { top: 60, bottom: 90, left: left + 60, right: Math.round(innerWidth - lg.left) + 24 };
+}
+
+/* ---------- 地図 ---------- */
+// 地図が作れない環境（オフライン、外部スクリプトを禁止したプレビュー等）でも一覧・カードは使えるようにする
+let map = null;
+function showMapError(msg, simple) {
+  if ($('mapError')) return;
+  const pos = isMobile() ? 'top:112px;left:8px;right:120px' : `top:12px;left:${Math.round(panel.getBoundingClientRect().right) + 16}px;right:290px`;
+  const head = simple ? '簡易表示（背景地図なし）' : '背景地図を表示できません';
+  document.body.insertAdjacentHTML('beforeend', `<div id="mapError" title="${esc(msg)}" style="position:absolute;${pos};z-index:4;padding:8px 12px;background:rgba(255,255,255,.95);border-radius:10px;box-shadow:var(--shadow);font-size:12px;line-height:1.6;color:#3c4043">
+    <b>${head}</b>：この画面では地図ライブラリが動きません。ChromeやEdgeで index.html を開くと、通常の地図で表示されます（要インターネット接続）。</div>`);
+}
+
+/* ---------- 簡易地図（MapLibre が使えない環境用の SVG 描画） ---------- */
+const FB = { vb: null, W: 0, H: 0 };
+function renderFallback() {
+  const host = $('map');
+  host.innerHTML = '';
+  const W = host.clientWidth || innerWidth, H = host.clientHeight || innerHeight;
+  const merc = (lng, lat) => { const s = Math.sin(lat * Math.PI / 180); return [(lng + 180) / 360, 0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)]; };
+  const pts = [];
+  D.areas.forEach(a => a.poly.forEach(p => pts.push(merc(p[1], p[0]))));
+  pts.push(merc(D.store.lng, D.store.lat));
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const pad = fitPadding();
+  const aw = Math.max(100, W - pad.left - pad.right), ah = Math.max(100, H - pad.top - pad.bottom);
+  const k = Math.min(aw / (x1 - x0), ah / (y1 - y0));
+  const P = (lng, lat) => { const [x, y] = merc(lng, lat); return [pad.left + aw / 2 + (x - (x0 + x1) / 2) * k, pad.top + ah / 2 + (y - (y0 + y1) / 2) * k]; };
+  const pl = arr => arr.map(p => P(p[1], p[0]).map(v => v.toFixed(1)).join(',')).join(' ');
+  const NS = 'vector-effect="non-scaling-stroke"';
+  let s = `<svg id="fbSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="position:absolute;inset:0;width:100%;height:100%;background:#f2f3f5;touch-action:none;cursor:grab;font-family:${LOCAL_FONT.replace(/"/g, "'")}">`;
+  D.rings.forEach(r => { s += `<polyline points="${pl(circle(storeLL, r, 96).map(q => [q[1], q[0]]))}" fill="none" stroke="#5f6368" stroke-width="1.2" stroke-dasharray="4 4" ${NS}/>`; });
+  D.rivers.forEach(r => { s += `<polyline points="${pl(r.pts)}" fill="none" stroke="#2F7FC1" stroke-width="${r.name === '矢田川' ? 7 : 2.5}" stroke-linecap="round" stroke-linejoin="round" ${NS}/>`; });
+  s += `<polyline points="${pl(D.rail.pts)}" fill="none" stroke="#1f2328" stroke-width="4.5" ${NS}/><polyline points="${pl(D.rail.pts)}" fill="none" stroke="#fff" stroke-width="1.8" stroke-dasharray="4 4" ${NS}/>`;
+  D.areas.forEach(a => {
+    s += `<g class="fb-a" data-no="${a.no}" data-layer="${a.layer}" style="cursor:pointer"><polygon points="${pl(a.poly)}" fill="${a.color}" fill-opacity=".4" stroke="${a.color}" stroke-width="1.6" ${NS}/></g>`;
+  });
+  const yd = D.rivers.find(r => r.name === '矢田川');
+  if (yd) { const [lx, ly] = P(yd.pts[6][1], yd.pts[6][0]); s += `<text x="${lx}" y="${ly + 18}" font-size="14" font-weight="800" fill="#17548a" stroke="#fff" stroke-width="3" paint-order="stroke">矢田川</text>`; }
+  D.stations.forEach(st => { const [x, y] = P(st.lng, st.lat); s += `<circle cx="${x}" cy="${y}" r="4.5" fill="#fff" stroke="#1f2328" stroke-width="2"/>`; });
+  D.rivals.forEach(r => {
+    const [x, y] = P(r.lng, r.lat), c = RIVAL_COLOR[r.brand] || '#555', z = r.name === FOCUS_RIVAL ? 10 : 7;
+    s += `<path d="M${x} ${y - z}L${x + z} ${y} ${x} ${y + z} ${x - z} ${y}z" fill="${c}" stroke="#fff" stroke-width="2"/>`;
+    if (r.name === FOCUS_RIVAL) s += `<text x="${x + 14}" y="${y + 4}" font-size="12.5" font-weight="800" fill="${c}" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(r.name)}</text>`;
+  });
+  D.areas.forEach(a => {
+    const [x, y] = P(...pinByNo.get(a.no));
+    s += `<g class="fb-a fb-pin" data-no="${a.no}" data-layer="${a.layer}" style="cursor:pointer">
+      <text x="${x}" y="${y + 27}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#1f2328" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(a.name)}</text>
+      <text x="${x}" y="${y + 41}" text-anchor="middle" font-size="11" font-weight="700" fill="#1f2328" stroke="#fff" stroke-width="3" paint-order="stroke">${fmt(a.mai)}枚</text>
+      <circle cx="${x}" cy="${y}" r="12" fill="${a.color}" stroke="#fff" stroke-width="2"/>
+      <text x="${x}" y="${y + 4.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#fff">${a.no}</text></g>`;
+  });
+  (custOn ? CUST : []).forEach(c => {
+    const [x, y] = P(c.lng, c.lat);
+    s += `<circle class="fb-cust" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${srcColor(c.src)}" stroke="#fff" stroke-width="1.6"><title>${esc(c.src)} ${esc(c.date)}</title></circle>`;
+  });
+  (visitsOn ? (D.visits || []) : []).forEach(v => {
+    for (let j = 0; j < v.n; j++) {
+      const t = j / Math.max(1, v.n) * 2 * Math.PI, r = v.n > 1 ? 0.00025 : 0;
+      const [x, y] = P(v.lng + r * Math.sin(t) * 1.22, v.lat + r * Math.cos(t));
+      s += `<circle class="fb-visit" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${VISIT_COLOR}" stroke="#fff" stroke-width="1.6"><title>${esc(v.town)} 来店${v.n}件</title></circle>`;
+    }
+  });
+  const [sx, sy] = P(D.store.lng, D.store.lat);
+  const star = Array.from({ length: 10 }, (_, i) => { const r = i % 2 ? 7 : 16, t = -Math.PI / 2 + i * Math.PI / 5; return `${(sx + r * Math.cos(t)).toFixed(1)},${(sy + r * Math.sin(t)).toFixed(1)}`; }).join(' ');
+  s += `<polygon points="${star}" fill="#E8B521" stroke="#6b4a00" stroke-width="1.5" stroke-linejoin="round"/><text x="${sx}" y="${sy + 32}" text-anchor="middle" font-size="13.5" font-weight="800" fill="#4a3500" stroke="#fff" stroke-width="3.5" paint-order="stroke">守山大森店</text></svg>`;
+  host.insertAdjacentHTML('beforeend', s);
+  FB.W = W; FB.H = H; FB.vb = [0, 0, W, H];
+  const svg = $('fbSvg');
+  const setVB = () => svg.setAttribute('viewBox', FB.vb.map(v => v.toFixed(1)).join(' '));
+  const toSvg = (cx, cy) => { const r = svg.getBoundingClientRect(); return [FB.vb[0] + (cx - r.left) / r.width * FB.vb[2], FB.vb[1] + (cy - r.top) / r.height * FB.vb[3]]; };
+  FB.zoom = (f, cx = innerWidth / 2, cy = innerHeight / 2) => {
+    const [px, py] = toSvg(cx, cy), w = Math.min(FB.W * 4, Math.max(FB.W / 8, FB.vb[2] / f)), h = w * FB.H / FB.W;
+    FB.vb = [px - (px - FB.vb[0]) * w / FB.vb[2], py - (py - FB.vb[1]) * h / FB.vb[3], w, h]; setVB();
+  };
+  svg.addEventListener('wheel', e => { e.preventDefault(); FB.zoom(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX, e.clientY); }, { passive: false });
+  let drag = null;
+  svg.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, vb: FB.vb.slice(), moved: false }; svg.setPointerCapture(e.pointerId); });
+  svg.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true;
+    const r = svg.getBoundingClientRect();
+    FB.vb = [drag.vb[0] - dx / r.width * drag.vb[2], drag.vb[1] - dy / r.height * drag.vb[3], drag.vb[2], drag.vb[3]]; setVB();
+  });
+  svg.addEventListener('pointerup', e => {
+    const d = drag; drag = null;
+    if (!d || d.moved) return;
+    const hit = document.elementsFromPoint(e.clientX, e.clientY).map(el => el.closest && el.closest('.fb-a')).find(Boolean);
+    if (hit) select(+hit.dataset.no, 'map'); else if (sel != null) deselect();
+  });
+}
+function fbHighlight(no) {
+  document.querySelectorAll('#fbSvg .fb-a').forEach(g => { g.style.opacity = no == null || +g.dataset.no === no ? 1 : 0.35; });
+}
+function fbFilter(keys) {
+  document.querySelectorAll('#fbSvg .fb-a').forEach(g => { g.style.display = keys.includes(g.dataset.layer) ? '' : 'none'; });
+}
+try {
+  if (typeof maplibregl === 'undefined') throw new Error('地図ライブラリ（MapLibre）を読み込めませんでした。');
+  map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://tiles.openfreemap.org/styles/positron',
+    bounds: areaBounds,
+    fitBoundsOptions: { padding: fitPadding(), maxZoom: 15.5 },
+    attributionControl: false,
+    localIdeographFontFamily: LOCAL_FONT,
+    maxPitch: 0,
+    pitchWithRotate: false,
+    touchPitch: false,
+    preserveDrawingBuffer: true, // 印刷用
+  });
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+} catch (e) {
+  map = null;
+  renderFallback();
+  showMapError(e && e.message ? e.message : 'unknown', true);
+  refreshCustomers(false);
+}
+window.__map = map;
+
+let sel = null, filterKey = 'all', ready = false;
+
+function addCanvasImage(id, w, h, draw) {
+  const r = 2, c = document.createElement('canvas');
+  c.width = w * r; c.height = h * r;
+  const x = c.getContext('2d'); x.scale(r, r); draw(x, w, h);
+  map.addImage(id, x.getImageData(0, 0, w * r, h * r), { pixelRatio: r });
+}
+function hexA(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`;
+}
+function addImages() {
+  LAYERS.forEach(k => {
+    const col = L[k].color;
+    addCanvasImage('pin-' + k, 30, 30, x => {
+      x.beginPath(); x.arc(15, 15, 12, 0, Math.PI * 2);
+      x.fillStyle = col; x.fill(); x.lineWidth = 2; x.strokeStyle = '#fff'; x.stroke();
+    });
+    addCanvasImage('pin-' + k + '-sel', 46, 46, x => {
+      x.save(); x.shadowColor = 'rgba(0,0,0,.4)'; x.shadowBlur = 6; x.shadowOffsetY = 1;
+      x.beginPath(); x.arc(23, 23, 18, 0, Math.PI * 2); x.fillStyle = col; x.fill(); x.restore();
+      x.beginPath(); x.arc(23, 23, 17, 0, Math.PI * 2); x.lineWidth = 4; x.strokeStyle = '#fff'; x.stroke();
+    });
+  });
+  addCanvasImage('store', 40, 40, x => {
+    const cx = 20, cy = 21, R = 17, r = 7.5;
+    x.beginPath();
+    for (let i = 0; i < 10; i++) { const rad = i % 2 ? r : R, a = -Math.PI / 2 + i * Math.PI / 5; x.lineTo(cx + rad * Math.cos(a), cy + rad * Math.sin(a)); }
+    x.closePath(); x.lineJoin = 'round';
+    x.lineWidth = 5; x.strokeStyle = '#fff'; x.stroke();
+    x.fillStyle = '#E8B521'; x.fill();
+    x.lineWidth = 1.6; x.strokeStyle = '#6b4a00'; x.stroke();
+  });
+  const diamond = (id, size, col, halo) => addCanvasImage(id, size, size, (x, w) => {
+    const c = w / 2, s = halo ? w / 2 - 8 : w / 2 - 2;
+    if (halo) {
+      x.beginPath(); x.arc(c, c, w / 2 - 1.5, 0, Math.PI * 2);
+      x.fillStyle = hexA(col, .18); x.fill(); x.lineWidth = 2; x.strokeStyle = hexA(col, .9); x.stroke();
+    }
+    x.beginPath(); x.moveTo(c, c - s); x.lineTo(c + s, c); x.lineTo(c, c + s); x.lineTo(c - s, c); x.closePath();
+    x.fillStyle = col; x.fill(); x.lineWidth = 2; x.strokeStyle = '#fff'; x.stroke();
+  });
+  diamond('rival-daikichi', 20, RIVAL_COLOR['大吉']);
+  diamond('rival-otakara', 20, RIVAL_COLOR['おたからや']);
+  diamond('rival-focus', 40, RIVAL_COLOR['おたからや'], true);
+  addCanvasImage('bridge', 14, 14, x => {
+    x.fillStyle = '#3c4043'; x.strokeStyle = '#fff'; x.lineWidth = 2;
+    x.fillRect(2.5, 2.5, 9, 9); x.strokeRect(2.5, 2.5, 9, 9);
+  });
+}
+
+// ズーム段階。MapLibre は 512px タイル基準のため、Googleマップの z13/z15/z16 は MapLibre では −1 になる
+const Z_PIN = 12.5, Z_AREA_LABEL = 14, Z_DETAIL = 15, Z_FLY = 15;
+
+// ベースマップのラベルを日本語名だけにする（ローマ字併記を消して地図を静かにする）
+function localizeBasemap() {
+  map.getStyle().layers.forEach(l => {
+    if (l.type !== 'symbol') return;
+    const tf = map.getLayoutProperty(l.id, 'text-field');
+    if (tf && JSON.stringify(tf).includes('name')) {
+      map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:ja'], ['get', 'name']]);
+    }
+  });
+}
+
+const HALO = { 'text-halo-color': '#ffffff', 'text-halo-width': 1.8, 'text-halo-blur': 0.3 };
+const AREA_LAYERS = ['area-fill', 'area-line', 'area-pin', 'area-label'];
+
+function addLayers() {
+  Object.entries(G).forEach(([id, data]) => map.addSource(id, { type: 'geojson', data }));
+  const add = l => map.addLayer(l);
+  const z = (...stops) => ['interpolate', ['linear'], ['zoom'], ...stops];
+
+  add({ id: 'rings', type: 'line', source: 'rings',
+    paint: { 'line-color': '#5f6368', 'line-width': 1.3, 'line-dasharray': [3, 3], 'line-opacity': 0.8 } });
+  add({ id: 'area-fill', type: 'fill', source: 'areas',
+    paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.4 } });
+  add({ id: 'area-line', type: 'line', source: 'areas', layout: { 'line-join': 'round' },
+    paint: { 'line-color': ['get', 'color'], 'line-width': 1.6 } });
+  add({ id: 'rivers', type: 'line', source: 'rivers', layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': '#2F7FC1',
+      'line-width': z(11, ['case', ['get', 'main'], 3, 1.2], 14, ['case', ['get', 'main'], 7, 2.5], 17, ['case', ['get', 'main'], 14, 5]) } });
+  add({ id: 'rail-base', type: 'line', source: 'rail', layout: { 'line-join': 'round', 'line-cap': 'round' },
+    paint: { 'line-color': '#1f2328', 'line-width': z(11, 2.5, 16, 5.5) } });
+  add({ id: 'rail-dash', type: 'line', source: 'rail', layout: { 'line-join': 'round' },
+    paint: { 'line-color': '#ffffff', 'line-width': z(11, 1, 16, 2.6), 'line-dasharray': [3, 3] } });
+  add({ id: 'bridges', type: 'symbol', source: 'bridges', minzoom: 13.5,
+    layout: { 'icon-image': 'bridge', 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
+  add({ id: 'stations', type: 'circle', source: 'stations',
+    paint: { 'circle-radius': z(11, 3.5, 16, 6.5), 'circle-color': '#ffffff', 'circle-stroke-color': '#1f2328', 'circle-stroke-width': z(11, 1.5, 16, 2.5) } });
+  add({ id: 'rivals', type: 'symbol', source: 'rivals',
+    layout: { 'icon-image': ['case', ['get', 'focus'], 'rival-focus', ['concat', 'rival-', ['get', 'kind']]],
+      'icon-allow-overlap': true, 'icon-size': z(11, 0.8, 15, 1) } });
+
+  // ---- ラベル（下ほど優先度が低い。MapLibre は上のレイヤーから配置する）----
+  add({ id: 'ring-label', type: 'symbol', source: 'ringLabels', minzoom: 12,
+    layout: { 'text-field': ['get', 'label'], 'text-font': F_BOLD, 'text-size': 11, 'text-anchor': 'left', 'text-offset': [0.3, 0] },
+    paint: { 'text-color': '#5f6368', ...HALO } });
+  add({ id: 'river-label-minor', type: 'symbol', source: 'rivers', minzoom: 13, filter: ['!', ['get', 'main']],
+    layout: { 'symbol-placement': 'line', 'text-field': ['get', 'name'], 'text-font': F_REG, 'text-size': 12, 'symbol-spacing': 350, 'text-max-angle': 30 },
+    paint: { 'text-color': '#1d5f96', ...HALO } });
+  add({ id: 'rail-label', type: 'symbol', source: 'rail', minzoom: 12.5,
+    layout: { 'symbol-placement': 'line', 'text-field': ['get', 'name'], 'text-font': F_BOLD, 'text-size': 12, 'symbol-spacing': 420, 'text-max-angle': 30, 'text-offset': [0, -1] },
+    paint: { 'text-color': '#1f2328', ...HALO } });
+  add({ id: 'bridge-label', type: 'symbol', source: 'bridges', minzoom: Z_DETAIL,
+    layout: { 'text-field': ['get', 'name'], 'text-font': F_REG, 'text-size': 11,
+      'text-variable-anchor': ['left', 'right', 'top', 'bottom'], 'text-radial-offset': 0.8 },
+    paint: { 'text-color': '#3c4043', ...HALO } });
+  add({ id: 'rival-label', type: 'symbol', source: 'rivals', minzoom: Z_DETAIL, filter: ['!', ['get', 'focus']],
+    layout: { 'text-field': ['get', 'name'], 'text-font': F_BOLD, 'text-size': 11.5,
+      'text-variable-anchor': ['left', 'right', 'top', 'bottom'], 'text-radial-offset': 0.9 },
+    paint: { 'text-color': ['get', 'color'], ...HALO } });
+  add({ id: 'station-label', type: 'symbol', source: 'stations', minzoom: Z_DETAIL,
+    layout: { 'text-field': ['concat', ['get', 'name'], '駅'], 'text-font': F_BOLD, 'text-size': 12,
+      'text-variable-anchor': ['top', 'bottom', 'left', 'right'], 'text-radial-offset': 0.9 },
+    paint: { 'text-color': '#1f2328', ...HALO } });
+  add({ id: 'rival-label-focus', type: 'symbol', source: 'rivals', filter: ['get', 'focus'],
+    layout: { 'text-field': ['get', 'name'], 'text-font': F_BOLD, 'text-size': 13,
+      'text-variable-anchor': ['left', 'right', 'bottom', 'top'], 'text-radial-offset': 1.3 },
+    paint: { 'text-color': RIVAL_COLOR['おたからや'], 'text-halo-color': '#fff', 'text-halo-width': 2.2 } });
+  add({ id: 'area-label', type: 'symbol', source: 'pins', minzoom: Z_AREA_LABEL,
+    layout: { 'text-field': ['format', ['get', 'name'], { 'font-scale': 1 }, '\n', {}, ['get', 'maiText'], { 'font-scale': 0.92 }],
+      'text-font': F_BOLD, 'text-size': 12.5, 'text-line-height': 1.25,
+      'text-variable-anchor': ['top', 'bottom', 'right', 'left'], 'text-radial-offset': 1.7, 'text-justify': 'auto', 'text-padding': 1 },
+    paint: { 'text-color': '#1f2328', 'text-halo-color': '#fff', 'text-halo-width': 2 } });
+  add({ id: 'river-label-main', type: 'symbol', source: 'rivers', filter: ['get', 'main'],
+    layout: { 'symbol-placement': 'line', 'text-field': '矢田川', 'text-font': F_BOLD, 'text-size': z(12, 13, 16, 16),
+      'symbol-spacing': 260, 'text-max-angle': 35, 'text-letter-spacing': 0.2 },
+    paint: { 'text-color': '#17548a', 'text-halo-color': '#fff', 'text-halo-width': 2.4 } });
+  add({ id: 'area-pin', type: 'symbol', source: 'pins', minzoom: Z_PIN,
+    layout: { 'icon-image': ['concat', 'pin-', ['get', 'layer']], 'icon-allow-overlap': true, 'text-allow-overlap': true,
+      'text-field': ['to-string', ['get', 'no']], 'text-font': F_BOLD, 'text-size': 13, 'symbol-sort-key': 0 },
+    paint: { 'text-color': '#ffffff' } });
+  add({ id: 'customers', type: 'circle', source: 'customers',
+    paint: { 'circle-radius': z(11, 3.5, 14, 6, 17, 9), 'circle-color': ['get', 'color'], 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.8, 'circle-opacity': 0.95 } });
+  add({ id: 'visits', type: 'circle', source: 'visits',
+    paint: { 'circle-radius': z(11, 3, 14, 5, 17, 8), 'circle-color': VISIT_COLOR, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.6, 'circle-opacity': 0.95 } });
+  add({ id: 'store', type: 'symbol', source: 'store',
+    layout: { 'icon-image': 'store', 'icon-allow-overlap': true, 'text-allow-overlap': true,
+      'text-field': '守山大森店', 'text-font': F_BOLD, 'text-size': 14, 'text-anchor': 'top', 'text-offset': [0, 1.25] },
+    paint: { 'text-color': '#4a3500', 'text-halo-color': '#fff', 'text-halo-width': 2.4 } });
+}
+
+function paintSelection() {
+  const has = sel != null, is = ['==', ['get', 'no'], has ? sel : -1];
+  const pick = (a, b, d) => has ? ['case', is, a, b] : d;
+  map.setPaintProperty('area-fill', 'fill-opacity', pick(0.55, 0.14, 0.4));
+  map.setPaintProperty('area-line', 'line-width', pick(3.5, 1, 1.6));
+  map.setPaintProperty('area-line', 'line-opacity', pick(1, 0.45, 1));
+  const base = ['concat', 'pin-', ['get', 'layer']];
+  map.setLayoutProperty('area-pin', 'icon-image', pick(['concat', 'pin-', ['get', 'layer'], '-sel'], base, base));
+  map.setLayoutProperty('area-pin', 'text-size', pick(17, 13, 13));
+  map.setLayoutProperty('area-pin', 'symbol-sort-key', pick(1, 0, 0));
+  map.setPaintProperty('area-pin', 'icon-opacity', pick(1, 0.35, 1));
+  map.setPaintProperty('area-pin', 'text-opacity', pick(1, 0.55, 1));
+  map.setPaintProperty('area-label', 'text-opacity', pick(1, 0.45, 1));
+  map.setLayoutProperty('area-label', 'text-radial-offset', pick(2.4, 1.7, 1.7)); // 拡大したピンにラベルが隠れないように
+}
+
+/* ---------- 来店客データの読み込み ---------- */
+function inPoly(lng, lat, poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [yi, xi] = poly[i], [yj, xj] = poly[j];
+    if (((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) c = !c;
+  }
+  return c;
+}
+let custGenerated = '', custFetchedAt = 0, custError = false;
+async function loadCustomers() {
+  let raw;
+  try {
+    const r = await fetch(CUSTOMERS_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json();
+    raw = j.customers || [];
+    custGenerated = j.generated_at || '';
+    custFetchedAt = Date.now();
+    custError = false;
+  } catch (e) { custError = true; return false; }
+  custByArea = {};
+  const seen = {};
+  CUST = raw.filter(c => c.lat && c.lng).map(c => {
+    const src = c.newspaper || 'その他';
+    const a = D.areas.find(a => inPoly(c.lng, c.lat, a.poly));
+    if (a) { const g = (custByArea[a.no] ||= { total: 0, bySrc: {} }); g.total++; g.bySrc[src] = (g.bySrc[src] || 0) + 1; }
+    // 個人宅が特定できないよう、約200mの格子に丸めてから表示する
+    const glat = Math.round(c.lat / 0.0018) * 0.0018, glng = Math.round(c.lng / 0.0022) * 0.0022;
+    const k = glat.toFixed(4) + ',' + glng.toFixed(4);
+    const i = (seen[k] = (seen[k] || 0) + 1) - 1;
+    const t = i * 2.4, r2 = i ? 0.00022 : 0;
+    return { lat: glat + r2 * Math.cos(t), lng: glng + r2 * Math.sin(t) * 1.22, src, age: c.age_group || '', amount: c.amount || '', date: c.visit_date || '', area: a ? a.no : null };
+  });
+  return CUST.length > 0;
+}
+// 来店客データを取り込み直して地図・凡例・カードを更新する
+let custBusy = false;
+async function refreshCustomers(manual) {
+  if (custBusy) return;
+  custBusy = true;
+  const btn = $('custRefresh');
+  if (btn) { btn.disabled = true; btn.textContent = '更新中…'; }
+  const ok = await loadCustomers();
+  if (ok) {
+    if (map && map.getSource('customers')) {
+      map.getSource('customers').setData(customersFC());
+      map.setLayoutProperty('customers', 'visibility', custOn ? 'visible' : 'none');
+    } else if (!map) {
+      renderFallback(); fbFilter(filterKey === 'all' ? LAYERS : [filterKey]); if (sel != null) fbHighlight(sel);
+    }
+  }
+  renderLegend();
+  if (sel != null) renderCard(byNo.get(sel));
+  LAYERS.forEach(k => { L[k].hit = D.areas.filter(a => a.layer === k).reduce((s, a) => s + ((custByArea[a.no] && custByArea[a.no].total) || 0), 0); });
+  renderList();
+  applyFilter(filterKey);
+  if (sel != null) { const row = rowByNo.get(sel); if (row) row.classList.add('active'); }
+  custBusy = false;
+  if (manual && !ok) alert('来店客データを取得できませんでした。通信環境を確認してください。');
+  return ok;
+}
+const fmtTime = ts => { const d = new Date(ts); return isNaN(d) ? '' : `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+setInterval(() => { if (custOn) refreshCustomers(false); }, 5 * 60 * 1000);       // 表示中のみ5分ごと
+addEventListener('visibilitychange', () => { if (custOn && document.visibilityState === 'visible' && Date.now() - custFetchedAt > 120000) refreshCustomers(false); });
+addEventListener('focus', () => { if (custOn && Date.now() - custFetchedAt > 120000) refreshCustomers(false); });
+
+function customersFC() {
+  return fc(CUST.map((c, i) => point([c.lng, c.lat], { src: c.src, color: srcColor(c.src), age: c.age, amount: c.amount, date: c.date }, i + 1)));
+}
+
+/* ---------- 一覧・カード ---------- */
+const rowByNo = new Map();
+function renderList() {
+  list.innerHTML = '';
+  LAYERS.forEach(k => {
+    const g = document.createElement('section');
+    g.className = 'grp'; g.dataset.k = k;
+    g.innerHTML = `<div class="grp-head">
+      <div class="t"><span class="sw" style="background:${L[k].color}"></span>${k} ${esc(L[k].name)}</div>
+      <div class="m"><b>${L[k].count}</b>地区 · 合計 <b>${fmt(L[k].mai)}</b>枚 · 来店客 <b>${L[k].hit}</b>件</div>
+      <div class="d">${esc(L[k].desc)}</div></div>`;
+    D.areas.filter(a => a.layer === k).forEach(a => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'row'; b.dataset.no = a.no; b.dataset.layer = a.layer;
+      b.style.setProperty('--c', a.color);
+      b.innerHTML = `<span class="nb" style="background:${a.color}">${a.no}</span>
+        <span><span class="nm">${esc(a.name)}</span>
+        <span class="meta"><span>${a.km} km</span><span class="chip ratio">シェア比 ${a.ratio}倍</span><span class="chip ${a.hit ? 'hit-on' : 'hit-off'}">来店 ${a.hit == null ? '未照合' : a.hit}</span></span></span>
+        <span class="mai"><span class="row-mai">${fmt(a.mai)}</span><small>枚</small></span>`;
+      b.addEventListener('click', () => select(a.no, 'list'));
+      g.append(b); rowByNo.set(a.no, b);
+    });
+    list.append(g);
+  });
+}
+
+function renderCard(a) {
+  const lk = L[a.layer];
+  const river = a.river ? `<div class="s">${esc(a.river)}を${esc(a.bridge)}で渡る</div>` : '';
+  card.innerHTML = `
+    <div class="card-head">
+      <span class="num" style="background:${a.color}">${a.no}</span>
+      <div class="grow"><h2>${a.no}. ${esc(a.name)}</h2>
+        <span class="lbadge" style="background:${lk.tint};color:${lk.ink}">${a.layer} ${esc(a.layerName)}</span></div>
+      <button class="icon-btn" id="cardClose" type="button" aria-label="閉じる"><svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6z"/></svg></button>
+    </div>
+    <div class="mai-big"><span class="k">配布枚数</span><b id="cardMai">${fmt(a.mai)}</b><span class="u">枚</span></div>
+    <div class="tiles">
+      <div class="tile${a.river ? ' river' : ''}"><div class="k">実距離（代表点まで）</div><div class="v">${a.km}<small>km</small></div>${river}
+        <div class="s">代表点 ${a.lat}, ${a.lng}<br>2020年国勢調査 町丁目境界</div></div>
+      <div class="tile"><div class="k">シェア比</div><div class="v">${a.ratio}<small>倍</small></div>
+        <div class="s">自店 ${a.own}% ／ 2位 ${a.sec}%<br>2位：${esc(a.rival)}</div></div>
+      <div class="tile"><div class="k">世帯数</div><div class="v">${fmt(a.setai)}<small>世帯</small></div><div class="s">持ち家率 ${a.mochi}%</div></div>
+      ${a.n40 == null
+        ? '<div class="tile hit-off"><div class="k">持ち家40歳以上</div><div class="v">—</div><div class="s">元データと同じ集計値なし</div></div>'
+        : `<div class="tile"><div class="k">持ち家40歳以上</div><div class="v">${fmt(a.n40)}<small>人</small></div><div class="s">うち80歳以上 ${fmt(a.n80)}人</div></div>`}
+      ${!CUST.length
+        ? '<div class="tile wide hit-off"><div class="k">来店客</div><div class="v">—</div><div class="s">来店客マップのデータを読み込めていません</div></div>'
+        : `<div class="tile wide ${custByArea[a.no] ? 'hit-on' : 'hit-off'}"><div class="k">来店客（きっかけ別）</div><div class="v">${custByArea[a.no] ? custByArea[a.no].total : 0}<small>件</small></div>
+           ${custByArea[a.no] ? `<div class="s">${Object.entries(custByArea[a.no].bySrc).sort((x, y) => y[1] - x[1]).map(([s, n]) => `<span style="color:${srcColor(s)};font-weight:700">●</span>${esc(s)} ${n}`).join(' ／ ')}</div>` : ''}</div>`}
+    </div>`;
+  card.hidden = false;
+  $('cardClose').addEventListener('click', deselect);
+}
+
+function select(no, src) {
+  const a = byNo.get(no);
+  if (!a) return;
+  if (filterKey !== 'all' && filterKey !== a.layer) applyFilter('all');
+  sel = no;
+  if (ready) paintSelection();
+  if (!map) fbHighlight(no);
+  renderCard(a);
+  rowByNo.forEach((r, n) => { r.classList.toggle('active', n === no); r.classList.remove('flash'); });
+  const row = rowByNo.get(no);
+  void row.offsetWidth; row.classList.add('flash');
+  if (isMobile()) {
+    if (sheetState === 'peek') setSheet('half');
+    panelBody.scrollTop = 0;
+  } else {
+    row.scrollIntoView({ block: 'nearest' });
+  }
+  if (popup) popup.remove();
+  fly(no);
+}
+function deselect() {
+  sel = null;
+  if (ready) paintSelection();
+  if (!map) fbHighlight(null);
+  card.hidden = true; card.innerHTML = '';
+  rowByNo.forEach(r => r.classList.remove('active', 'flash'));
+}
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+function fly(no) {
+  if (!map) return;
+  const o = occluded();
+  const offset = [(o.left + o.right) / 2 - innerWidth / 2, (o.top + o.bottom) / 2 - innerHeight / 2];
+  map.flyTo({ center: pinByNo.get(no), zoom: Math.max(map.getZoom(), isMobile() ? Z_FLY - 0.5 : Z_FLY), offset, duration: 500, easing: ease, essential: true });
+}
+
+/* ---------- フィルタ ---------- */
+const pills = $('pills');
+function renderPills() {
+  const total = D.areas.length;
+  const mk = (k, label, long, n, color) =>
+    `<button class="pill" type="button" data-k="${k}" aria-pressed="${k === filterKey}"><span>${color ? `<i style="--c:${color}"></i>` : ''}${label}${long ? `<span class="long">${long}</span>` : ''} <small>${n}</small></span></button>`;
+  pills.innerHTML = mk('all', 'すべて', '', total) + LAYERS.map(k => mk(k, k, ' ' + esc(L[k].name), L[k].count, L[k].color)).join('');
+  pills.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => applyFilter(p.dataset.k)));
+}
+function applyFilter(k) {
+  filterKey = k;
+  const keys = k === 'all' ? LAYERS : [k];
+  pills.querySelectorAll('.pill').forEach(p => p.setAttribute('aria-pressed', String(p.dataset.k === k)));
+  list.querySelectorAll('.grp').forEach(g => { g.hidden = !keys.includes(g.dataset.k); });
+  if (ready) {
+    const f = ['in', ['get', 'layer'], ['literal', keys]];
+    AREA_LAYERS.forEach(id => map.setFilter(id, f));
+  }
+  if (!map) fbFilter(keys);
+  if (sel != null && !keys.includes(byNo.get(sel).layer)) deselect();
+  const shown = D.areas.filter(a => keys.includes(a.layer));
+  $('psum').innerHTML = `${k === 'all' ? '' : k + ' ' + esc(L[k].name) + '：'}<b>${shown.length}</b>地区 · 合計 <b>${fmt(shown.reduce((s, a) => s + a.mai, 0))}</b>枚 · 来店客 ${shown.reduce((s, a) => s + ((custByArea[a.no] && custByArea[a.no].total) || 0), 0)}件`;
+}
+
+/* ---------- 検索 ---------- */
+const q = $('q'), suggest = $('suggest'), qClear = $('qClear');
+let hits = [];
+function renderSuggest() {
+  const v = q.value.trim();
+  qClear.hidden = !v;
+  if (!v) { suggest.hidden = true; return; }
+  hits = D.areas.filter(a => a.name.includes(v) || String(a.no) === v);
+  suggest.innerHTML = hits.length
+    ? hits.map(a => `<li><button type="button" role="option" data-no="${a.no}"><span class="nb" style="width:24px;height:24px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800;background:${a.color}">${a.no}</span>${esc(a.name)}<span class="sub">${a.layer} · ${fmt(a.mai)}枚</span></button></li>`).join('')
+    : '<li class="empty">該当する地区がありません</li>';
+  suggest.hidden = false;
+  suggest.querySelectorAll('button').forEach(b => b.addEventListener('click', () => pick(+b.dataset.no)));
+}
+function pick(no) {
+  q.value = byNo.get(no).name; qClear.hidden = false;
+  suggest.hidden = true; q.blur();
+  select(no, 'search');
+}
+q.addEventListener('input', renderSuggest);
+q.addEventListener('focus', () => { if (q.value.trim()) renderSuggest(); });
+q.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && hits.length && q.value.trim()) { e.preventDefault(); pick(hits[0].no); }
+  else if (e.key === 'Escape') { suggest.hidden = true; q.blur(); }
+  else if (e.key === 'ArrowDown' && !suggest.hidden) { const b = suggest.querySelector('button'); if (b) { e.preventDefault(); b.focus(); } }
+});
+suggest.addEventListener('keydown', e => {
+  const bs = [...suggest.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+  if (e.key === 'ArrowDown' && i < bs.length - 1) { e.preventDefault(); bs[i + 1].focus(); }
+  if (e.key === 'ArrowUp') { e.preventDefault(); (i > 0 ? bs[i - 1] : q).focus(); }
+  if (e.key === 'Escape') { suggest.hidden = true; q.focus(); }
+});
+document.addEventListener('pointerdown', e => { if (!topbar.contains(e.target)) suggest.hidden = true; });
+qClear.addEventListener('click', () => { q.value = ''; qClear.hidden = true; suggest.hidden = true; q.focus(); });
+
+/* ---------- ボトムシート（スマホ） ---------- */
+const SHEET_ORDER = ['full', 'half', 'peek'];
+function sheetY(state) {
+  const H = panel.offsetHeight;
+  if (state === 'full') return 0;
+  if (state === 'half') return Math.max(0, H - Math.round(innerHeight * 0.52));
+  return H - PEEK;
+}
+function sheetVisible(state) { return isMobile() ? panel.offsetHeight - sheetY(state) : 0; }
+function setSheet(state) {
+  sheetState = state; panel.dataset.state = state;
+  if (!isMobile()) { panel.style.transform = ''; return; }
+  panel.classList.remove('dragging');
+  panel.style.transform = `translateY(${sheetY(state)}px)`;
+}
+(() => {
+  const head = $('sheetHead');
+  let drag = null;
+  head.addEventListener('pointerdown', e => {
+    if (!isMobile()) return;
+    drag = { y0: e.clientY, t0: sheetY(sheetState), y: sheetY(sheetState), moved: false };
+    head.setPointerCapture(e.pointerId);
+    panel.classList.add('dragging');
+  });
+  head.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const dy = e.clientY - drag.y0;
+    if (Math.abs(dy) > 5) drag.moved = true;
+    drag.y = Math.min(sheetY('peek'), Math.max(0, drag.t0 + dy));
+    panel.style.transform = `translateY(${drag.y}px)`;
+  });
+  const end = () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    const i = SHEET_ORDER.indexOf(sheetState);
+    if (!d.moved) return setSheet(sheetState === 'half' ? 'full' : 'half'); // タップ：半開き↔全開
+    const dy = d.y - d.t0;
+    if (dy < -40) return setSheet(SHEET_ORDER[Math.max(0, i - 1)]);
+    if (dy > 40) return setSheet(SHEET_ORDER[Math.min(2, i + 1)]);
+    setSheet(sheetState);
+  };
+  head.addEventListener('pointerup', end);
+  head.addEventListener('pointercancel', end);
+})();
+mq.addEventListener('change', () => { setSheet(isMobile() ? 'peek' : sheetState); $('legend').open = !isMobile(); if (map) map.resize(); });
+let fbTimer = null;
+addEventListener('resize', () => {
+  if (isMobile()) setSheet(sheetState);
+  if (!map && FB.vb) { clearTimeout(fbTimer); fbTimer = setTimeout(() => { renderFallback(); fbFilter(filterKey === 'all' ? LAYERS : [filterKey]); fbHighlight(sel); }, 200); }
+});
+
+/* ---------- 地図イベント ---------- */
+const popup = map && new maplibregl.Popup({ offset: 14, maxWidth: '270px', closeButton: true });
+function showPopup(coord, html) { popup.setLngLat(coord).setHTML(html).addTo(map); }
+const CLICK_LAYERS = ['store', 'customers', 'visits', 'rivals', 'stations', 'bridges', 'area-pin', 'area-fill'];
+function hitTest(pt, pad) {
+  const box = [[pt.x - pad, pt.y - pad], [pt.x + pad, pt.y + pad]];
+  const layers = CLICK_LAYERS.filter(id => map.getLayer(id));
+  const fs = map.queryRenderedFeatures(box, { layers });
+  for (const id of CLICK_LAYERS) { const f = fs.find(x => x.layer.id === id); if (f) return f; }
+  return null;
+}
+function bindMapEvents() {
+  map.on('click', e => {
+    const f = hitTest(e.point, e.originalEvent.pointerType === 'touch' ? 12 : 4);
+    if (!f) { if (sel != null) deselect(); popup.remove(); return; }
+    const id = f.layer.id, p = f.properties;
+    if (id === 'area-pin' || id === 'area-fill') return select(p.no, 'map');
+    if (id === 'store') return showPopup(storeLL, `<b>${esc(D.store.name)}</b><div class="pop-sub">${esc(D.store.addr)}</div>`);
+    if (id === 'customers') {
+      return showPopup(f.geometry.coordinates, `<b style="color:${p.color}">${esc(p.src)}</b><div class="pop-sub">${esc(p.date)}／${esc(p.age)}／${esc(p.amount)}<br>位置は約200mに丸めた概略です</div>`);
+    }
+    if (id === 'visits') {
+      return showPopup(f.geometry.coordinates, `<b style="color:${VISIT_COLOR}">${esc(p.town)}</b><div>来店 ${p.n}件</div><div class="pop-sub">ECS 2026-08-01〜09-24・住所判明44件</div>`);
+    }
+    if (id === 'stations') {
+      const s = D.stations[p.idx];
+      return showPopup([s.lng, s.lat], `<b>${esc(s.name)}駅</b><div>${esc(s.line)}</div><div class="pop-sub">店舗から ${s.km} km</div>`);
+    }
+    if (id === 'bridges') {
+      const b = D.bridges[p.idx];
+      return showPopup([b.lng, b.lat], `<b>${esc(b.name)}</b><div class="pop-sub">矢田川の車道橋</div>`);
+    }
+    if (id === 'rivals') {
+      const r = D.rivals[p.idx];
+      const vs = D.areas.filter(a => a.rival === r.name).map(a => `${a.no} ${esc(a.name)}`);
+      const note = r.name === FOCUS_RIVAL ? '<div style="color:#B4306E;font-weight:700">C層の直接の敵</div>' : '';
+      return showPopup([r.lng, r.lat], `<b style="color:${RIVAL_COLOR[r.brand]}">${esc(r.name)}</b><div>${esc(BRAND_LABEL[r.brand] || r.brand)}（競合）</div>${note}<div class="pop-sub">店舗から ${r.km} km${vs.length ? `<br>2位として競合する地区：${vs.join('、')}` : ''}</div>`);
+    }
+  });
+  map.on('mousemove', e => { map.getCanvas().style.cursor = hitTest(e.point, 3) ? 'pointer' : ''; });
+  map.on('rotate', () => { $('compassIcon').style.transform = `rotate(${-map.getBearing()}deg)`; });
+}
+
+/* ---------- 右下の操作 ---------- */
+$('zIn').addEventListener('click', () => map ? map.zoomIn({ duration: 250 }) : FB.zoom && FB.zoom(1.4));
+$('zOut').addEventListener('click', () => map ? map.zoomOut({ duration: 250 }) : FB.zoom && FB.zoom(1 / 1.4));
+$('north').addEventListener('click', () => map ? map.easeTo({ bearing: 0, pitch: 0, duration: 300 }) : (FB.vb && ($('fbSvg').setAttribute('viewBox', '0 0 ' + FB.W + ' ' + FB.H), FB.vb = [0, 0, FB.W, FB.H])));
+// 赤ピン＝ECS実績（既定で表示）／青ピン＝来店客マップの最新データ（任意で表示）
+$('custBtn').addEventListener('click', async () => {
+  custOn = !custOn;
+  $('custBtn').setAttribute('aria-pressed', String(custOn));
+  $('custBtn').style.opacity = custOn ? '' : '.45';
+  if (custOn && !CUST.length) { const ok = await refreshCustomers(true); if (!ok) { custOn = false; $('custBtn').style.opacity = '.45'; return; } }
+  if (map && map.getLayer('visits')) map.setLayoutProperty('visits', 'visibility', 'none');
+  if (map && map.getLayer('customers')) map.setLayoutProperty('customers', 'visibility', custOn ? 'visible' : 'none');
+  if (!map) { renderFallback(); fbFilter(filterKey === 'all' ? LAYERS : [filterKey]); }
+  renderLegend();
+});
+const geoBtn = $('geo');
+let geoMarker = null;
+const disableGeo = () => { geoBtn.disabled = true; geoBtn.title = '現在地を取得できません'; };
+if (!('geolocation' in navigator)) disableGeo();
+else if (navigator.permissions && navigator.permissions.query) {
+  navigator.permissions.query({ name: 'geolocation' }).then(s => { if (s.state === 'denied') disableGeo(); }).catch(() => {});
+}
+geoBtn.addEventListener('click', () => {
+  if (!map) return;
+  navigator.geolocation.getCurrentPosition(pos => {
+    const c = [pos.coords.longitude, pos.coords.latitude];
+    if (!geoMarker) { const el = document.createElement('div'); el.className = 'geo-dot'; geoMarker = new maplibregl.Marker({ element: el }); }
+    geoMarker.setLngLat(c).addTo(map);
+    map.flyTo({ center: c, zoom: Math.max(map.getZoom(), 15), duration: 500, easing: ease });
+  }, disableGeo, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+});
+
+/* ---------- 凡例・注記 ---------- */
+function renderLegend() {
+  const sq = c => `<svg width="18" height="14"><rect x="1" y="1" width="16" height="12" rx="2" fill="${hexA(c, .4)}" stroke="${c}" stroke-width="1.6"/></svg>`;
+  const dia = (c, s = 14) => `<svg width="18" height="18" viewBox="0 0 18 18"><path d="M9 ${9 - s / 2}L${9 + s / 2} 9 9 ${9 + s / 2} ${9 - s / 2} 9z" fill="${c}" stroke="#fff" stroke-width="1.5"/></svg>`;
+  const ln = (w, c = '#2F7FC1') => `<svg width="18" height="10"><line x1="1" y1="5" x2="17" y2="5" stroke="${c}" stroke-width="${w}" stroke-linecap="round"/></svg>`;
+  let h = '<h4>配布の3層（地図の色）</h4>';
+  LAYERS.forEach(k => {
+    h += `<div class="it">${sq(L[k].color)}<b>${k} ${esc(L[k].name)}</b><span class="n">${L[k].count}地区 ${fmt(L[k].mai)}枚</span></div><div class="desc">${esc(L[k].desc)}</div>`;
+  });
+  h += `<div class="it"><svg width="18" height="18"><circle cx="9" cy="9" r="7.5" fill="#1f2328" stroke="#fff" stroke-width="1.5"/><text x="9" y="12.5" font-size="9" font-weight="800" fill="#fff" text-anchor="middle">1</text></svg>丸ピンの数字＝地区番号<span class="n">計 ${fmt(D.areas.reduce((s, a) => s + a.mai, 0))}枚</span></div>`;
+  h += '<h4>店舗・競合</h4>';
+  h += `<div class="it"><svg width="18" height="18" viewBox="0 0 40 40"><path d="M20 4l4.6 10.5 11.4 1.1-8.6 7.6 2.5 11.2L20 28.6 10.1 34.4l2.5-11.2L4 15.6l11.4-1.1z" fill="#E8B521" stroke="#6b4a00" stroke-width="2"/></svg><b>守山大森店（自店）</b></div>`;
+  h += `<div class="it">${dia(RIVAL_COLOR['大吉'])}買取大吉（他店）<span class="n">${D.rivals.filter(r => r.brand === '大吉').length}店</span></div>`;
+  h += `<div class="it">${dia(RIVAL_COLOR['おたからや'])}おたからや<span class="n">${D.rivals.filter(r => r.brand === 'おたからや').length}店</span></div>`;
+  h += `<div class="it"><svg width="18" height="18"><circle cx="9" cy="9" r="8" fill="${hexA(RIVAL_COLOR['おたからや'], .18)}" stroke="${RIVAL_COLOR['おたからや']}" stroke-width="1.5"/><path d="M9 4L14 9 9 14 4 9z" fill="${RIVAL_COLOR['おたからや']}"/></svg><b style="color:${RIVAL_COLOR['おたからや']}">${FOCUS_RIVAL}＝C層の直接の敵</b></div>`;
+  if (custOn && CUST.length) {
+    const by = {}; CUST.forEach(c => { by[c.src] = (by[c.src] || 0) + 1; });
+    h += `<h4>来店客（きっかけ別）</h4>`;
+    Object.entries(by).sort((a, b) => b[1] - a[1]).forEach(([s, n]) => {
+      h += `<div class="it"><svg width="18" height="18"><circle cx="9" cy="9" r="6" fill="${srcColor(s)}" stroke="#fff" stroke-width="1.6"/></svg>${esc(s)}<span class="n">${n}件</span></div>`;
+    });
+    h += `<div class="desc">来店客マップの元データを自動で読み込み（5分ごと・画面に戻ったとき）。位置は約200mに丸めた概略。右下の赤ボタンで表示切替</div>
+      <div class="it" style="gap:6px"><span class="n" style="margin:0">データ ${esc(custGenerated ? fmtTime(custGenerated) : '—')} 時点／取得 ${fmtTime(custFetchedAt)}</span>
+      <button id="custRefresh" type="button" style="margin-left:auto;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:11.5px;cursor:pointer">今すぐ更新</button></div>`;
+  } else {
+    if (custError) h += `<div class="it" style="color:#9E2F20">来店客データを取得できません<button id="custRefresh" type="button" style="margin-left:auto;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:14px;background:#fff;font-size:11.5px;cursor:pointer">再試行</button></div>`;
+      h += `<h4>来店客</h4><div class="it" style="color:#9E2F20">来店客マップのデータを読み込めていません</div><div class="desc">${esc(CUSTOMERS_URL)}</div>`;
+  }
+  h += '<h4>地形・目印</h4>';
+  h += `<div class="it">${ln(5)}<span><b>矢田川</b>：店舗の南${D.meta ? D.meta.yadaKm : ''}kmを横切る障壁</span></div>`;
+  h += `<div class="it">${ln(2)}${esc(D.rivers.filter(r => r.name !== '矢田川').map(r => r.name).join('・'))}</div>`;
+  h += `<div class="it"><svg width="18" height="14"><rect x="3" y="3" width="8" height="8" fill="#3c4043" stroke="#fff" stroke-width="1.5"/></svg>矢田川の車道橋<span class="n">${D.bridges.length}か所</span></div>`;
+  h += `<div class="it"><svg width="18" height="10"><line x1="1" y1="5" x2="17" y2="5" stroke="#1f2328" stroke-width="5"/><line x1="1" y1="5" x2="17" y2="5" stroke="#fff" stroke-width="2" stroke-dasharray="3 3"/></svg>${esc(D.rail.name)}</div>`;
+  h += `<div class="it"><svg width="18" height="14"><circle cx="9" cy="7" r="5" fill="#fff" stroke="#1f2328" stroke-width="2"/></svg>駅<span class="n">${D.stations.length}駅</span></div>`;
+  h += `<div class="it"><svg width="18" height="14"><circle cx="9" cy="7" r="6" fill="none" stroke="#5f6368" stroke-width="1.3" stroke-dasharray="3 2"/></svg>距離円 ${D.rings.map(r => r + 'km').join(' / ')}</div>`;
+  h += '<div class="print-only"><h4>配布地区一覧</h4><table id="printList">' +
+    D.areas.map(a => `<tr><td><b style="color:${a.color}">${a.no}</b></td><td>${esc(a.name)}</td><td>${a.layer}</td><td class="r">${fmt(a.mai)}枚</td></tr>`).join('') +
+    `<tr><td></td><td><b>合計</b></td><td></td><td class="r"><b>${fmt(D.areas.reduce((s, a) => s + a.mai, 0))}枚</b></td></tr></table></div>`;
+  $('legendBody').innerHTML = h;
+  const rb = $('custRefresh');
+  if (rb) rb.addEventListener('click', e => { e.preventDefault(); refreshCustomers(true); });
+}
+const NOTES = `<p>面の境界＝2020年国勢調査の町丁目境界。世帯数＝同・主世帯数。枚数＝一戸建て世帯数（持ち家が一戸建てより50世帯以上多い町丁目は持ち家世帯数）。発注時は配布業者のGIS地図で町丁目名を突き合わせて確定してください。</p>
+<p>距離＝店舗（公式地図の位置）から町丁目の代表点まで。矢田川を渡る場合は自店・競合店とも車道橋経由／シェア＝修正ハフモデル λ=2.0・競合9店／判定＝ランチェスター射程距離理論（A：2位の3倍以上・B：√3倍以上・C：劣勢だが実来店あり）／来店客＝来店客マップ（nagoya-customer-map）の公開データを読み込み。位置は約200mに丸めた概略／${esc(D.meta && D.meta.updated || '')} 店舗位置を修正して再計算、薮田町を追加し17地区で確定（2026-09-24修正：追加していた8地区を削除）</p>
+<p>出典：総務省統計局 e-Stat「令和2年国勢調査 小地域集計・境界データ」を加工して作成／地図 © OpenStreetMap contributors</p>`;
+document.querySelectorAll('.notes').forEach(n => { n.innerHTML = NOTES; });
+$('printSum').textContent = `3層・${D.areas.length}地区・合計 ${fmt(D.areas.reduce((s, a) => s + a.mai, 0))}枚`;
+
+/* ---------- 印刷 ---------- */
+const beforePrint = () => { $('legend').open = true; if (map) { map.resize(); if (map.redraw) map.redraw(); } };
+const afterPrint = () => { $('legend').open = !isMobile(); if (map) map.resize(); };
+addEventListener('beforeprint', beforePrint);
+addEventListener('afterprint', afterPrint);
+
+/* ---------- 起動 ---------- */
+renderPills(); renderList(); renderLegend(); applyFilter('all');
+if (isMobile()) { $('legend').open = false; setSheet('peek'); }
+if (map) map.on('error', e => { if (!ready && e && e.error && /Failed to fetch|NetworkError|style/i.test(String(e.error.message))) showMapError('背景地図を読み込めませんでした。'); });
+if (map) map.on('load', () => {
+  localizeBasemap(); addImages(); addLayers(); bindMapEvents();
+  ready = true;
+  applyFilter(filterKey);
+  if (sel != null) paintSelection();
+  if (isMobile()) { const at = document.querySelector('.maplibregl-ctrl-attrib'); if (at) at.classList.remove('maplibregl-compact-show'); }
+  refreshCustomers(false).then(() => { window.__custLoaded = CUST.length; });
+  window.__ready = true;
+});
+})();
+</script>
+</body>
+</html>
