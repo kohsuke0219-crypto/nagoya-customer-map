@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-09-26T21:26:19+09:00",
+  "generated_at": "2026-09-29T15:11:36+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 46,
+  "total": 48,
   "by_newspaper": {
     "新聞折込チラシ": 5,
     "通りすがり　看板見て": 1,
     "通りすがり": 17,
-    "ネット検索": 9,
+    "ネット検索": 11,
     "CM・テレビ": 3,
     "ご紹介": 5,
     "通りがかり": 2,
@@ -835,6 +835,40 @@
         "ブランド"
       ],
       "registered_at": "9/26/2026 17:01:30",
+      "precision": "address"
+    },
+    {
+      "id": "a860d5ebe486",
+      "loc_group": "a6d08b9a47",
+      "lat": 35.211214,
+      "lng": 136.99248,
+      "area": "愛知県名古屋市守山区",
+      "gender": "女性",
+      "age_group": "50代",
+      "newspaper": "ネット検索",
+      "visit_date": "9/27/2026",
+      "amount": "10万以下",
+      "categories": [
+        "ジュエリー"
+      ],
+      "registered_at": "9/29/2026 11:18:19",
+      "precision": "address"
+    },
+    {
+      "id": "fa6583288636",
+      "loc_group": "ed313343f2",
+      "lat": 35.187117,
+      "lng": 137.030864,
+      "area": "愛知県長久手市",
+      "gender": "男性",
+      "age_group": "40代",
+      "newspaper": "ネット検索",
+      "visit_date": "9/29/2026",
+      "amount": "10万以下",
+      "categories": [
+        "JCBギフト券"
+      ],
+      "registered_at": "9/29/2026 11:19:48",
       "precision": "address"
     }
   ]
