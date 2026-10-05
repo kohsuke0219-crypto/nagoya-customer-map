@@ -1,17 +1,17 @@
 {
-  "generated_at": "2026-10-03T20:55:04+09:00",
+  "generated_at": "2026-10-05T17:51:11+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 53,
+  "total": 55,
   "by_newspaper": {
     "新聞折込チラシ": 5,
     "通りすがり　看板見て": 1,
-    "通りすがり": 18,
+    "通りすがり": 19,
     "ネット検索": 14,
-    "CM・テレビ": 3,
+    "CM・テレビ": 4,
     "ご紹介": 5,
     "通りがかり": 2,
     "再来店": 1,
@@ -958,6 +958,43 @@
         "着物"
       ],
       "registered_at": "10/3/2026 19:24:55",
+      "precision": "address"
+    },
+    {
+      "id": "8a9d78bf7347",
+      "loc_group": "36242f1d91",
+      "lat": 35.197587,
+      "lng": 137.009623,
+      "area": "愛知県名古屋市守山区",
+      "gender": "男性",
+      "age_group": "50代",
+      "newspaper": "CM・テレビ",
+      "visit_date": "10/5/2026",
+      "amount": "それ以上",
+      "categories": [
+        "ブランド",
+        "時計",
+        "金券",
+        "アマギフ"
+      ],
+      "registered_at": "10/5/2026 15:23:34",
+      "precision": "address"
+    },
+    {
+      "id": "599a303fd0ac",
+      "loc_group": "a1fb98e86c",
+      "lat": 35.200225,
+      "lng": 136.98229,
+      "area": "愛知県名古屋市守山区",
+      "gender": "女性",
+      "age_group": "50代",
+      "newspaper": "通りすがり",
+      "visit_date": "10/5/2026",
+      "amount": "10万以下",
+      "categories": [
+        "カメラ"
+      ],
+      "registered_at": "10/5/2026 15:42:24",
       "precision": "address"
     }
   ]
