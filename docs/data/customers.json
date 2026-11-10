@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-11-10T16:29:25+09:00",
+  "generated_at": "2026-11-11T00:44:46+09:00",
   "store": {
     "name": "買取大吉 守山大森店",
     "lat": 35.2017705,
     "lng": 136.9961965
   },
-  "total": 75,
+  "total": 77,
   "by_newspaper": {
     "新聞折込チラシ": 8,
     "通りすがり　看板見て": 1,
-    "通りすがり": 24,
+    "通りすがり": 25,
     "ネット検索": 21,
     "CM・テレビ": 6,
     "ご紹介": 6,
-    "通りがかり": 4,
+    "通りがかり": 5,
     "再来店": 1,
     "顧客": 2,
     "近所だから": 1,
@@ -1051,6 +1051,23 @@
       "precision": "address"
     },
     {
+      "id": "b1307a75246b",
+      "loc_group": "1a8ce5b853",
+      "lat": 35.172163,
+      "lng": 136.925765,
+      "area": "愛知県名古屋市東区",
+      "gender": "男性",
+      "age_group": "20代",
+      "newspaper": "通りがかり",
+      "visit_date": "10/10/2026",
+      "amount": "10万以下",
+      "categories": [
+        "貴金属"
+      ],
+      "registered_at": "10/10/2026 13:27:57",
+      "precision": "address"
+    },
+    {
       "id": "a626d4ab96ac",
       "loc_group": "ce0196a579",
       "lat": 35.208927,
@@ -1349,6 +1366,23 @@
         "カメラ"
       ],
       "registered_at": "11/9/2026 16:33:52",
+      "precision": "address"
+    },
+    {
+      "id": "0cbdfef4227d",
+      "loc_group": "0eb94061da",
+      "lat": 35.382046,
+      "lng": 136.869131,
+      "area": "岐阜県各務原市",
+      "gender": "男性",
+      "age_group": "60代",
+      "newspaper": "通りすがり",
+      "visit_date": "11/10/2026",
+      "amount": "10万以下",
+      "categories": [
+        "金券"
+      ],
+      "registered_at": "11/10/2026 17:23:04",
       "precision": "address"
     }
   ]
